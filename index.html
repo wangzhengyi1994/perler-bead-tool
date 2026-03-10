@@ -20,10 +20,10 @@
   --green:#4ade80;--green-l:#86efac;--green-d:#22c55e;
   --red:#f87171;--red-l:#fca5a5;--red-d:#dc2626;
   --cyan:#67e8f9;--cyan-l:#a5f3fc;--cyan-d:#22bdd8;
-  --orange:#fb923c;--orange-l:#fdba74;--orange-d:#e07020;
+  --orange:#fb923c;--orange-l:#fdba74;--orange-d:#e07020;--orange-dd:#b85a18;
   --teal:#2dd4bf;--teal-d:#14b8a6;--teal-dd:#0d9488;
   --navy:#3b4a8c;--navy-d:#2d3a6e;--navy-dd:#1e2a52;
-  --text:#2d1b4e;--text2:#6b5a8a;--text3:#9a8db5;
+  --text:#2e1f0a;--text2:#7a6545;--text3:#a0926a;
   --font:'Zpix',monospace;
   --body:system-ui,-apple-system,'PingFang SC',sans-serif;
   --safe-b:env(safe-area-inset-bottom,0px);
@@ -86,7 +86,7 @@ body{font-family:var(--body);background:var(--bg);color:var(--text);min-height:1
 
 /* ═══ 3D ISOMETRIC CUBE ═══ */
 .cube-container{position:relative;width:160px;height:190px;margin:0 auto 36px;z-index:3}
-/* Top face - pink/purple */
+/* Top face - pink */
 .cube-top{position:absolute;width:160px;height:95px;top:0;left:0;
   background:linear-gradient(180deg,var(--pink-l),var(--pink),var(--pink-d));
   clip-path:polygon(50% 0%,100% 28%,50% 56%,0% 28%);
@@ -159,7 +159,7 @@ body{font-family:var(--body);background:var(--bg);color:var(--text);min-height:1
   background:rgba(255,255,255,.5);clip-path:polygon(15% 0,100% 0,85% 100%,0 100%);z-index:5;pointer-events:none}
 .fbtn-inner::after{content:'';position:absolute;top:6px;left:36px;width:10px;height:5px;
   background:rgba(255,255,255,.3);clip-path:polygon(15% 0,100% 0,85% 100%,0 100%);z-index:5;pointer-events:none}
-.bg-purple{background:linear-gradient(180deg,var(--purple-l),var(--purple),var(--purple-d))}
+.bg-orange{background:linear-gradient(180deg,var(--orange-l),var(--orange),var(--orange-d))}
 .bg-yellow{background:linear-gradient(180deg,var(--yellow-l),var(--yellow),var(--yellow-d));color:var(--black)!important;text-shadow:1px 1px 0 rgba(255,255,255,.3)!important}
 .bg-pink{background:linear-gradient(180deg,var(--pink-l),var(--pink),var(--pink-d))}
 .bg-blue{background:linear-gradient(180deg,var(--blue-l),var(--blue),var(--blue-d))}
@@ -196,7 +196,7 @@ input[type=file]{display:none}
 .s-row{display:flex;align-items:center;justify-content:space-between;padding:13px 14px}
 .s-row+.s-row{border-top:2px solid #e8f5ee}
 .s-label{font-size:.72rem;color:var(--text)}
-.pkr{padding:5px 14px;background:linear-gradient(180deg,var(--purple-l),var(--purple),var(--purple-d));
+.pkr{padding:5px 14px;background:linear-gradient(180deg,var(--orange-l),var(--orange),var(--orange-d));
   border:var(--px) solid var(--black);font-family:var(--font);font-size:.52rem;color:var(--white);cursor:pointer;position:relative;text-shadow:1px 1px 0 rgba(0,0,0,.2)}
 .pkr::before{content:'';position:absolute;top:3px;left:5px;width:8px;height:3px;background:rgba(255,255,255,.35)}
 .pkr:active{transform:scale(.95)}
@@ -213,7 +213,7 @@ input[type=file]{display:none}
 .cl-dots{display:flex;gap:3px;margin-right:10px}
 .cl-dot{width:14px;height:14px;border:2px solid var(--black)}
 .cl-text{flex:1;font-size:.65rem;color:var(--text)}
-.cl-arrow{font-family:var(--font);color:var(--purple);font-size:.6rem}
+.cl-arrow{font-family:var(--font);color:var(--orange);font-size:.6rem}
 .hint{padding:10px 16px;font-family:var(--font);font-size:.4rem;color:rgba(255,255,255,.35);text-align:center;position:relative;z-index:1}
 
 /* Bottom bar */
@@ -231,24 +231,30 @@ input[type=file]{display:none}
 /* ═══ SHEETS ═══ */
 .sheet-mask{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:100}
 .sheet-mask.show{display:block}
-.sheet{position:fixed;left:0;right:0;bottom:0;max-height:55vh;background:var(--white);border-top:var(--px) solid var(--black);z-index:101;
-  transform:translateY(100%);transition:transform .25s cubic-bezier(.22,.68,0,1);overflow:hidden;display:flex;flex-direction:column}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-height:70vh;background:var(--white);z-index:101;
+  transform:translateY(100%);transition:transform .25s cubic-bezier(.22,.68,0,1);overflow:hidden;display:flex;flex-direction:column;
+  border-radius:16px 16px 0 0}
 .sheet-mask.show .sheet{transform:translateY(0)}
-.sh-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:var(--px) solid var(--black)}
-.sh-title{font-family:var(--font);font-size:.68rem;color:var(--text)}
-.sh-done{font-family:var(--font);font-size:.52rem;padding:4px 12px;cursor:pointer;
-  background:linear-gradient(180deg,var(--yellow-l),var(--yellow),var(--yellow-d));border:2px solid var(--black);color:var(--black);position:relative}
-.sh-done::before{content:'';position:absolute;top:2px;left:4px;width:6px;height:2px;background:rgba(255,255,255,.35)}
-.sh-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:env(safe-area-inset-bottom,16px)}
-.sh-group{font-family:var(--font);font-size:.45rem;color:var(--purple);padding:12px 16px 4px;letter-spacing:1px}
-.sh-item{display:flex;align-items:center;padding:12px 16px;cursor:pointer;transition:background .1s}
-.sh-item:active{background:#f0faf5}
-.sh-item+.sh-item{border-top:1px solid #e8f5ee}
-.sh-name{flex:1;font-size:.7rem;color:var(--text)}
-.sh-meta{font-size:.55rem;color:var(--text3);margin-right:10px}
-.sh-check{width:18px;height:18px;border:var(--px) solid var(--black);background:var(--white);display:flex;align-items:center;justify-content:center;font-family:var(--font);font-size:.45rem;color:transparent}
-.sh-item.sel .sh-check{background:linear-gradient(180deg,var(--green-l),var(--green));color:var(--white)}
-
+.sh-handle{width:36px;height:4px;background:#ddd;border-radius:2px;margin:10px auto 0}
+.sh-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px}
+.sh-title{font-size:.82rem;font-weight:700;color:var(--text)}
+.sh-close{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;
+  font-size:.8rem;color:var(--text3);cursor:pointer;background:none}
+.sh-close:active{background:#f5f5f5}
+.sh-current{font-size:.62rem;color:var(--orange);padding:4px 16px 12px;border-bottom:1px solid #f0f0f0}
+.sh-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px;padding-bottom:env(safe-area-inset-bottom,16px)}
+.sh-section{font-size:.78rem;font-weight:700;color:var(--text);padding:14px 0 8px}
+.sh-tags{display:flex;flex-wrap:wrap;gap:8px}
+.sh-tag{flex:0 0 calc(50% - 4px);display:flex;align-items:center;justify-content:space-between;
+  padding:10px 12px;border:2px solid #e8e8e8;cursor:pointer;transition:all .12s;background:var(--white)}
+.sh-tag:active{background:#fff8f0}
+.sh-tag.sel{border-color:var(--orange);background:linear-gradient(180deg,#fff5eb,#fff0e0)}
+.sh-tag-name{font-size:.72rem;font-weight:500;color:var(--text)}
+.sh-tag.sel .sh-tag-name{color:var(--orange);font-weight:700}
+.sh-tag-count{font-size:.58rem;color:var(--text3)}
+.sh-tips{margin:14px 0;padding:12px;background:#fff8f0;border:1px solid #ffe8cc}
+.sh-tips-title{font-size:.65rem;font-weight:600;color:var(--orange);margin-bottom:6px}
+.sh-tips-text{font-size:.55rem;color:var(--text2);line-height:1.8}
 /* ═══ COLOR FILTER ═══ */
 .c-bar{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--bg);border-bottom:var(--px) solid var(--black);position:sticky;top:52px;z-index:10}
 .c-bar-btn{padding:5px 12px;border:var(--px) solid var(--black);background:linear-gradient(180deg,var(--yellow-l),var(--yellow),var(--yellow-d));font-family:var(--font);font-size:.45rem;color:var(--black);cursor:pointer;position:relative}
@@ -269,7 +275,7 @@ input[type=file]{display:none}
 .r-bar{display:flex;gap:6px;padding:10px 16px;overflow-x:auto;flex-shrink:0;position:relative;z-index:1}
 .r-btn{padding:6px 14px;border:var(--px) solid var(--black);background:linear-gradient(180deg,#fff,#f0faf5);font-family:var(--font);font-size:.45rem;cursor:pointer;white-space:nowrap;color:var(--text2);position:relative}
 .r-btn::before{content:'';position:absolute;top:2px;left:4px;width:6px;height:2px;background:rgba(255,255,255,.5)}
-.r-btn.on{background:linear-gradient(180deg,var(--purple-l),var(--purple),var(--purple-d));color:var(--white);text-shadow:1px 1px 0 rgba(0,0,0,.2)}
+.r-btn.on{background:linear-gradient(180deg,var(--orange-l),var(--orange),var(--orange-d));color:var(--white);text-shadow:1px 1px 0 rgba(0,0,0,.2)}
 .r-btn:active{transform:scale(.95)}
 .cv-wrap{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:12px 16px;overflow:auto;position:relative;z-index:1}
 .cv-wrap canvas{max-width:100%;border:var(--px) solid var(--black);image-rendering:pixelated}
@@ -301,18 +307,18 @@ input[type=file]{display:none}
 .m-row+.m-row{border-top:2px solid #e8f5ee}
 .m-sw{width:28px;height:28px;flex-shrink:0;border:2px solid var(--black)}
 .m-info{flex:1}.m-name{font-size:.65rem;color:var(--text)}.m-brand{font-size:.5rem;color:var(--text3)}
-.m-de{font-family:var(--font);font-size:.5rem;color:var(--purple)}
+.m-de{font-family:var(--font);font-size:.5rem;color:var(--orange)}
 #idCanvas{max-width:100%;border:var(--px) solid var(--black)!important;cursor:crosshair}
 
 /* ═══ TOAST ═══ */
 .toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(10px);
-  background:linear-gradient(180deg,var(--purple-l),var(--purple),var(--purple-d));color:var(--white);border:var(--px) solid var(--black);
+  background:linear-gradient(180deg,var(--orange-l),var(--orange),var(--orange-d));color:var(--white);border:var(--px) solid var(--black);
   padding:8px 18px;font-family:var(--font);font-size:.5rem;z-index:200;opacity:0;transition:all .2s;pointer-events:none;text-shadow:1px 1px 0 rgba(0,0,0,.2)}
 .toast::before{content:'';position:absolute;top:4px;left:8px;width:10px;height:3px;background:rgba(255,255,255,.35);clip-path:polygon(15% 0,100% 0,85% 100%,0 100%)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 ::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-thumb{background:var(--purple)}
+::-webkit-scrollbar-thumb{background:var(--orange)}
 ::-webkit-scrollbar-track{background:rgba(0,0,0,.05)}
 </style>
 </head>
@@ -360,7 +366,7 @@ input[type=file]{display:none}
     <div class="home-btns">
       <div class="fbtn" onclick="btnClick(this,'photo')">
         <div class="pill-border"></div>
-        <button class="fbtn-inner bg-purple">照片转图纸</button>
+        <button class="fbtn-inner bg-orange">照片转图纸</button>
       </div>
       <div class="fbtn" onclick="btnClick(this,'draw')">
         <div class="pill-border"></div>
@@ -393,12 +399,19 @@ input[type=file]{display:none}
     </div></div>
     <div class="hint">支持手势缩放和拖拽调整</div>
   </div>
-  <div class="bbar"><div class="pbtn" style="width:100%"><div class="pill-border"></div><button class="pbtn-inner bg-purple" id="btnGen" disabled onclick="startGen()">START</button></div></div>
+  <div class="bbar"><div class="pbtn" style="width:100%"><div class="pill-border"></div><button class="pbtn-inner bg-orange" id="btnGen" disabled onclick="startGen()">START</button></div></div>
 </div>
 
 <!-- SHEETS -->
-<div class="sheet-mask" id="sheetBrand" onclick="closeSheet('brand')"><div class="sheet" onclick="event.stopPropagation()"><div class="sh-hd"><span class="sh-title">选择品牌</span><span class="sh-done" onclick="closeSheet('brand')">OK</span></div><div class="sh-body" id="brandBody"></div></div></div>
-<div class="sheet-mask" id="sheetSize" onclick="closeSheet('size')"><div class="sheet" onclick="event.stopPropagation()"><div class="sh-hd"><span class="sh-title">画布尺寸</span><span class="sh-done" onclick="closeSheet('size')">OK</span></div><div class="sh-body" id="sizeBody"></div></div></div>
+<div class="sheet-mask" id="sheetBrand" onclick="closeSheet('brand')"><div class="sheet" onclick="event.stopPropagation()">
+<div class="sh-handle"></div>
+<div class="sh-hd"><span class="sh-title">选择拼豆品牌</span><span class="sh-close" onclick="closeSheet('brand')">×</span></div>
+<div class="sh-current" id="brandCurrent"></div>
+<div class="sh-body" id="brandBody"></div></div></div>
+<div class="sheet-mask" id="sheetSize" onclick="closeSheet('size')"><div class="sheet" onclick="event.stopPropagation()">
+<div class="sh-handle"></div>
+<div class="sh-hd"><span class="sh-title">画布尺寸</span><span class="sh-close" onclick="closeSheet('size')">×</span></div>
+<div class="sh-body" id="sizeBody"></div></div></div>
 
 <!-- COLOR FILTER -->
 <div class="page" id="pageColors">
@@ -462,12 +475,20 @@ let dCol=null,dErase=false,dGrid=null,dN=29,fillBg=false,exMode='standard',navSt
 
 function nav(id){const cur=navSt[navSt.length-1];if(cur===id)return;const ce=document.getElementById('page'+cap(cur)),ne=document.getElementById('page'+cap(id));if(!ne)return;const d={home:0,photo:1,draw:1,identify:1,colors:2,result:2},deeper=(d[id]||0)>(d[cur]||0);if(deeper)navSt.push(id);else{const i=navSt.indexOf(id);navSt=i>=0?navSt.slice(0,i+1):[...navSt,id]}ce.classList.remove('active','slide-in');ne.classList.remove('slide-out');if(deeper){ne.classList.add('active','slide-in');setTimeout(()=>{ce.classList.remove('active');ne.classList.remove('slide-in')},260)}else{ne.classList.add('active');ce.classList.add('slide-out');setTimeout(()=>{ce.classList.remove('active','slide-out')},220)}if(id==='photo')upUI();if(id==='colors')renCP();if(id==='draw')initDraw();if(id==='result'){renRes();bldSt()}}
 function cap(s){return s[0].toUpperCase()+s.slice(1)}
+let recentBrands=JSON.parse(localStorage.getItem('recentBrands')||'[]');
 function openSheet(t){if(t==='brand')renBrand();if(t==='size')renSize();document.getElementById('sheet'+cap(t)).classList.add('show')}
 function closeSheet(t){document.getElementById('sheet'+cap(t)).classList.remove('show');upUI()}
-function renBrand(){let h='<div class="sh-group">DOMESTIC</div>';for(const b of CN_BRANDS)h+=shI(b);h+='<div class="sh-group">INTERNATIONAL</div>';for(const b of INTL_BRAND_NAMES)h+=shI(b);document.getElementById('brandBody').innerHTML=h}
-function shI(b){return`<div class="sh-item ${b===cBrand?'sel':''}" onclick="pickB('${b}')"><span class="sh-name">${bdn(b)}</span><span class="sh-meta">${bCnt(b)}色</span><span class="sh-check">✓</span></div>`}
-function renSize(){document.getElementById('sizeBody').innerHTML=SD.map(s=>{const sl=s.w===cSize.w&&s.h===cSize.h;return`<div class="sh-item ${sl?'sel':''}" onclick="pickS(${s.w},${s.h})"><span class="sh-name">${s.l} <span style="font-size:.5rem;color:var(--text3)">${s.t}</span></span><span class="sh-meta">${s.b}颗</span><span class="sh-check">✓</span></div>`}).join('')}
-function pickB(b){cBrand=b;selC=new Set(allC().map(c=>c.hex));toast(bdn(b));closeSheet('brand')}
+function renBrand(){
+  document.getElementById('brandCurrent').textContent='当前选择: '+bdn(cBrand)+' ('+bCnt(cBrand)+'色)';
+  let h='';
+  if(recentBrands.length){h+='<div class="sh-section">最近使用</div><div class="sh-tags">';recentBrands.forEach(b=>{h+=bTag(b)});h+='</div>'}
+  h+='<div class="sh-section">国产品牌</div><div class="sh-tags">';CN_BRANDS.forEach(b=>{h+=bTag(b)});h+='</div>';
+  h+='<div class="sh-section">国际品牌</div><div class="sh-tags">';INTL_BRAND_NAMES.forEach(b=>{h+=bTag(b)});h+='</div>';
+  h+='<div class="sh-tips"><div class="sh-tips-title">购买提示</div><div class="sh-tips-text">· 不同品牌的拼豆尺寸可能略有差异<br>· 建议正式制作前购买小包装测试颜色效果<br>· 大型作品建议预算充足的颜色数量<br>· 可以混用不同品牌 但要注意尺寸匹配度</div></div>';
+  document.getElementById('brandBody').innerHTML=h}
+function bTag(b){return`<div class="sh-tag ${b===cBrand?'sel':''}" onclick="pickB('${b}')"><span class="sh-tag-name">${bdn(b)}</span><span class="sh-tag-count">${bCnt(b)}色</span></div>`}
+function renSize(){let h='<div class="sh-tags" style="padding:14px 0">';h+=SD.map(s=>{const sl=s.w===cSize.w&&s.h===cSize.h;return`<div class="sh-tag ${sl?'sel':''}" onclick="pickS(${s.w},${s.h})"><span class="sh-tag-name">${s.l} <span style="font-size:.5rem;color:var(--text3)">${s.t}</span></span><span class="sh-tag-count">${s.b}颗</span></div>`}).join('');h+='</div>';document.getElementById('sizeBody').innerHTML=h}
+function pickB(b){cBrand=b;selC=new Set(allC().map(c=>c.hex));recentBrands=recentBrands.filter(x=>x!==b);recentBrands.unshift(b);if(recentBrands.length>3)recentBrands.pop();localStorage.setItem('recentBrands',JSON.stringify(recentBrands));toast(bdn(b));closeSheet('brand')}
 function pickS(w,h){cSize={w,h};toast(w+'x'+h);closeSheet('size')}
 function isI(b){return INTL_BRAND_NAMES.includes(b||cBrand)}
 function isK(b){return(b||cBrand)==='卡卡'}
