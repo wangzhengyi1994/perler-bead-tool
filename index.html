@@ -11,7 +11,7 @@
   --px:3px;
   --black:#1a2e1a;
   --white:#fff;
-  --bg:#3ba55d;--bg-d:#2d8a48;--bg-dd:#1f6e35;
+  --bg:#6AB55E;--bg-d:#5A9E50;--bg-dd:#4A8B42;
   --surface:#fff;
   --purple:#9b72cf;--purple-l:#b794f6;--purple-d:#7b52af;--purple-dd:#5e3a8c;
   --pink:#f472b6;--pink-l:#f9a8d4;--pink-d:#d44a94;
@@ -21,8 +21,8 @@
   --red:#f87171;--red-l:#fca5a5;--red-d:#dc2626;
   --cyan:#67e8f9;--cyan-l:#a5f3fc;--cyan-d:#22bdd8;
   --orange:#fb923c;--orange-l:#fdba74;--orange-d:#e07020;--orange-dd:#b85a18;
-  --teal:#2dd4bf;--teal-d:#14b8a6;--teal-dd:#0d9488;
-  --navy:#3b4a8c;--navy-d:#2d3a6e;--navy-dd:#1e2a52;
+  --olive:#9AB030;--olive-d:#849A28;--olive-dd:#6E8420;
+  --gray-face:#B0B0B0;--gray-face-d:#909090;--gray-face-dd:#707070;
   --text:#2e1f0a;--text2:#7a6545;--text3:#a0926a;
   --font:'Zpix',monospace;
   --body:system-ui,-apple-system,'PingFang SC',sans-serif;
@@ -88,7 +88,7 @@ body{font-family:var(--body);background:var(--bg);color:var(--text);min-height:1
 .cube-container{position:relative;width:160px;height:190px;margin:0 auto 36px;z-index:3}
 /* Top face - pink */
 .cube-top{position:absolute;width:160px;height:95px;top:0;left:0;
-  background:linear-gradient(180deg,var(--pink-l),var(--pink),var(--pink-d));
+  background:linear-gradient(180deg,var(--pink-l),#F2A0B0,var(--pink-d));
   clip-path:polygon(50% 0%,100% 28%,50% 56%,0% 28%);
   display:flex;align-items:center;justify-content:center}
 .cube-top::after{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);
@@ -96,11 +96,11 @@ body{font-family:var(--body);background:var(--bg);color:var(--text);min-height:1
   clip-path:polygon(15% 0,100% 0,85% 100%,0 100%)}
 /* Left face - navy/dark blue */
 .cube-left{position:absolute;width:80px;height:120px;top:52px;left:0;
-  background:linear-gradient(180deg,var(--navy),var(--navy-d),var(--navy-dd));
+  background:linear-gradient(180deg,var(--gray-face),var(--gray-face-d),var(--gray-face-dd));
   clip-path:polygon(0% 22%,100% 0%,100% 78%,0% 100%)}
 /* Right face - teal/cyan */
 .cube-right{position:absolute;width:80px;height:120px;top:52px;left:80px;
-  background:linear-gradient(180deg,var(--teal),var(--teal-d),var(--teal-dd));
+  background:linear-gradient(180deg,var(--olive),var(--olive-d),var(--olive-dd));
   clip-path:polygon(0% 0%,100% 22%,100% 100%,0% 78%)}
 /* Face icons */
 .cube-icon{position:absolute;display:flex;align-items:center;justify-content:center;
@@ -161,7 +161,7 @@ body{font-family:var(--body);background:var(--bg);color:var(--text);min-height:1
   background:rgba(255,255,255,.3);clip-path:polygon(15% 0,100% 0,85% 100%,0 100%);z-index:5;pointer-events:none}
 .bg-orange{background:linear-gradient(180deg,var(--orange-l),var(--orange),var(--orange-d))}
 .bg-yellow{background:linear-gradient(180deg,var(--yellow-l),var(--yellow),var(--yellow-d));color:var(--black)!important;text-shadow:1px 1px 0 rgba(255,255,255,.3)!important}
-.bg-pink{background:linear-gradient(180deg,var(--pink-l),var(--pink),var(--pink-d))}
+.bg-pink{background:linear-gradient(180deg,var(--pink-l),#F2A0B0,var(--pink-d))}
 .bg-blue{background:linear-gradient(180deg,var(--blue-l),var(--blue),var(--blue-d))}
 .bg-green{background:linear-gradient(180deg,var(--green-l),var(--green),var(--green-d))}
 .bg-cyan{background:linear-gradient(180deg,var(--cyan-l),var(--cyan),var(--cyan-d))}
