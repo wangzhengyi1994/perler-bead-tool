@@ -2,657 +2,518 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>拼豆工坊</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zpix&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Zpix&display=swap');
-*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-:root {
-  --bg: #6c3ce0;
-  --bg-deep: #5228b8;
-  --surface: #ffffff;
-  --text: #1a1a1a;
-  --text-mid: #555;
-  --text-light: #999;
-  --accent: #3ddc84;
-  --accent-dark: #2bb866;
-  --accent-bg: rgba(61,220,132,.12);
-  --yellow: #fbbf24;
-  --pink: #f472b6;
-  --cyan: #67e8f9;
-  --dark-bar: #1a1a2e;
-  --font: 'Zpix', monospace;
-  --safe-b: env(safe-area-inset-bottom, 0px);
-  --px: 3px;
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg-1:#1a0a3e;--bg-2:#2d1b69;--bg-3:#3d2580;
+  --surface:#fff;--surface-alt:#f8f6ff;
+  --card-shadow:0 2px 20px rgba(0,0,0,.15),0 0 0 1px rgba(255,255,255,.06);
+  --text:#1c1c2e;--text-2:#6b6b8d;--text-3:#9b9bb0;
+  --accent:#7c5cfc;--accent-light:#a78bfa;--accent-bg:rgba(124,92,252,.08);
+  --green:#34d399;--green-dark:#059669;--green-bg:rgba(52,211,153,.1);
+  --yellow:#fbbf24;--pink:#f472b6;--cyan:#67e8f9;
+  --pixel:'Zpix',monospace;
+  --body:system-ui,-apple-system,'PingFang SC','Noto Sans SC',sans-serif;
+  --r:16px;--r-sm:10px;
+  --safe-b:env(safe-area-inset-bottom,0px);
 }
-html { font-size: 14px; -webkit-tap-highlight-color: transparent; }
-body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100dvh; line-height: 1.8; overflow-x: hidden; }
-.app { max-width: 480px; margin: 0 auto; min-height: 100dvh; background: var(--bg); position: relative; overflow: hidden; }
+html{font-size:15px;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--body);background:var(--bg-1);color:var(--text);min-height:100dvh;-webkit-font-smoothing:antialiased}
+.app{max-width:480px;margin:0 auto;min-height:100dvh;position:relative;overflow:hidden;
+  background:linear-gradient(165deg,var(--bg-1) 0%,var(--bg-2) 40%,var(--bg-3) 100%)}
 
-/* Animated pixel grid background */
-.app::before {
-  content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background-image:
-    radial-gradient(circle at 2px 2px, rgba(255,255,255,.06) 1px, transparent 1px);
-  background-size: 16px 16px;
-}
+/* ═══ Animated background ═══ */
+.bg-grid{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.03;
+  background-image:linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px);
+  background-size:24px 24px}
+.bg-orb{position:fixed;border-radius:50%;filter:blur(80px);pointer-events:none;z-index:0;animation:orbFloat 8s ease-in-out infinite alternate}
+.bg-orb-1{width:200px;height:200px;background:rgba(124,92,252,.15);top:10%;left:-40px}
+.bg-orb-2{width:160px;height:160px;background:rgba(52,211,153,.1);bottom:20%;right:-30px;animation-delay:3s}
+@keyframes orbFloat{0%{transform:translateY(0) scale(1)}100%{transform:translateY(-30px) scale(1.1)}}
 
-/* ═══ PIXEL BORDER MIXIN via box-shadow ═══ */
-.pixel-box {
-  background: var(--surface);
-  box-shadow:
-    0 0 0 var(--px) var(--accent),
-    var(--px) var(--px) 0 var(--px) rgba(0,0,0,.12),
-    calc(var(--px)*-1) 0 0 0 var(--accent),
-    var(--px) 0 0 0 var(--accent),
-    0 calc(var(--px)*-1) 0 0 var(--accent),
-    0 var(--px) 0 0 var(--accent);
-}
+/* ═══ Pages ═══ */
+.page{display:none;position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;z-index:1;-webkit-overflow-scrolling:touch}
+.page.active{display:flex;flex-direction:column;z-index:2}
+.page.slide-in{animation:pgIn .28s cubic-bezier(.22,.68,0,1.1) forwards}
+.page.slide-out{animation:pgOut .22s ease-in forwards}
+@keyframes pgIn{from{transform:translateX(100%);opacity:.6}to{transform:translateX(0);opacity:1}}
+@keyframes pgOut{from{transform:translateX(0);opacity:1}to{transform:translateX(-30%);opacity:0}}
 
-/* Pages & Transitions */
-.page { display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow-y: auto; overflow-x: hidden; background: transparent; z-index: 1; }
-.page.active { display: flex; flex-direction: column; z-index: 2; }
-.page.slide-in { animation: slideIn .22s ease-out forwards; }
-.page.slide-out { animation: slideOut .22s ease-in forwards; }
-@keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
-@keyframes slideOut { from { transform: translateX(0); } to { transform: translateX(100%); } }
-
-/* Header */
-.header {
-  padding: 14px 16px; display: flex; align-items: center; gap: 12px;
-  position: sticky; top: 0; z-index: 50; background: var(--bg); flex-shrink: 0;
-}
-.header-back { background: none; border: none; font-size: 1rem; color: var(--accent); cursor: pointer; width: 32px; text-align: left; font-family: var(--font); }
-.header-title { font-size: .8rem; font-weight: 600; flex: 1; color: #fff; }
-.header-right { font-size: .7rem; color: var(--accent); cursor: pointer; font-weight: 500; }
-.page-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+/* ═══ Header ═══ */
+.hd{padding:16px 20px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50;
+  background:linear-gradient(180deg,var(--bg-2) 60%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.hd-back{width:36px;height:36px;display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.08);border-radius:var(--r-sm);border:none;color:#fff;font-size:.85rem;cursor:pointer;
+  backdrop-filter:blur(8px);transition:all .15s}
+.hd-back:active{transform:scale(.92);background:rgba(255,255,255,.15)}
+.hd-title{flex:1;font-size:.9rem;font-weight:600;color:#fff;letter-spacing:.5px}
+.hd-right{font-size:.75rem;color:var(--accent-light);cursor:pointer;font-weight:500}
 
 /* ═══ HOME ═══ */
-.home { padding: 24px 16px 20px; position: relative; z-index: 1; }
-.home-banner {
-  text-align: center; margin-bottom: 24px; padding: 20px 16px;
-  background: rgba(255,255,255,.08); border: var(--px) solid rgba(255,255,255,.15);
-  position: relative;
-}
-.home-banner::after {
-  content: ''; position: absolute; bottom: -6px; right: -6px;
-  width: calc(100% - 6px); height: calc(100% - 6px);
-  border-right: var(--px) solid rgba(255,255,255,.08);
-  border-bottom: var(--px) solid rgba(255,255,255,.08);
-  pointer-events: none;
-}
-.home-logo { font-size: 2rem; margin-bottom: 8px; display: block; }
-.home-title { font-size: 1rem; font-weight: 700; color: #fff; text-shadow: 2px 2px 0 rgba(0,0,0,.25); }
-.home-desc { font-size: .6rem; color: rgba(255,255,255,.5); margin-top: 6px; letter-spacing: 2px; }
+.home{padding:8px 20px 24px;position:relative;z-index:1}
 
-/* Pixel stars decoration */
-.pixel-stars { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; overflow: hidden; z-index: 0; }
-.pixel-star {
-  position: absolute; width: 4px; height: 4px; background: rgba(255,255,255,.3);
-  animation: twinkle 2s ease-in-out infinite alternate;
-}
-@keyframes twinkle { 0%{opacity:.2;transform:scale(.5)} 100%{opacity:1;transform:scale(1)} }
+/* Hero */
+.hero{text-align:center;padding:40px 20px 32px;position:relative;margin-bottom:24px}
+.hero-badge{display:inline-block;padding:4px 14px;border-radius:20px;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);
+  font-family:var(--pixel);font-size:.55rem;color:var(--green);letter-spacing:2px;
+  margin-bottom:16px;backdrop-filter:blur(4px)}
+.hero-icon{font-size:3rem;margin-bottom:12px;display:block;
+  filter:drop-shadow(0 4px 12px rgba(124,92,252,.3));
+  animation:heroFloat 3s ease-in-out infinite alternate}
+@keyframes heroFloat{0%{transform:translateY(0)}100%{transform:translateY(-6px)}}
+.hero h1{font-size:1.6rem;font-weight:800;color:#fff;letter-spacing:1px;
+  background:linear-gradient(135deg,#fff 30%,var(--accent-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero-sub{font-family:var(--pixel);font-size:.5rem;color:rgba(255,255,255,.35);margin-top:8px;letter-spacing:3px}
+/* Pixel decoration dots */
+.hero::before,.hero::after{content:'';position:absolute;width:4px;height:4px;background:var(--green);opacity:.4}
+.hero::before{top:20px;left:30px;box-shadow:8px 0 0 var(--accent-light),0 8px 0 var(--yellow)}
+.hero::after{bottom:16px;right:24px;box-shadow:-8px 0 0 var(--pink),0 -8px 0 var(--cyan)}
 
-.feature-card {
-  display: flex; align-items: center; gap: 14px;
-  background: var(--surface); padding: 16px 14px;
-  margin-bottom: 14px; cursor: pointer; position: relative;
-  border: var(--px) solid var(--accent);
-  transition: transform .08s;
-}
-/* Pixel shadow (offset block) */
-.feature-card::after {
-  content: ''; position: absolute;
-  bottom: calc(var(--px) * -3); right: calc(var(--px) * -3);
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,.15);
-  z-index: -1;
-}
-.feature-card:active { transform: translate(3px, 3px); }
-.feature-card:active::after { transform: translate(-3px, -3px); }
+/* Feature Cards */
+.cards{display:flex;flex-direction:column;gap:12px}
+.fcard{display:flex;align-items:center;gap:16px;
+  background:var(--surface);padding:18px 16px;border-radius:var(--r);
+  box-shadow:var(--card-shadow);cursor:pointer;
+  position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s}
+.fcard:active{transform:scale(.97);box-shadow:0 1px 8px rgba(0,0,0,.1)}
+/* Pixel corner decorations on cards */
+.fcard::before{content:'';position:absolute;top:0;right:0;width:20px;height:20px;
+  background:linear-gradient(135deg,transparent 50%,var(--accent-bg) 50%);border-radius:0 var(--r) 0 0;opacity:.6}
+.fcard-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  font-size:1.4rem;flex-shrink:0;position:relative}
+.fcard-icon::after{content:'';position:absolute;inset:0;border-radius:14px;
+  box-shadow:inset 0 -2px 4px rgba(0,0,0,.1),inset 0 2px 4px rgba(255,255,255,.3)}
+.fi-1{background:linear-gradient(135deg,#7c5cfc,#a78bfa)}
+.fi-2{background:linear-gradient(135deg,#f59e0b,#fbbf24)}
+.fi-3{background:linear-gradient(135deg,#059669,#34d399)}
+.fcard-body{flex:1;min-width:0}
+.fcard-body h3{font-size:.88rem;font-weight:700;color:var(--text);margin-bottom:2px;display:flex;align-items:center;gap:6px}
+.fcard-body p{font-size:.72rem;color:var(--text-2);line-height:1.5}
+.tag-hot{font-family:var(--pixel);font-size:.45rem;padding:2px 6px;
+  background:linear-gradient(135deg,#f472b6,#ec4899);color:#fff;border-radius:4px;
+  letter-spacing:.5px;animation:tagPulse 2s ease-in-out infinite}
+@keyframes tagPulse{0%,100%{opacity:1}50%{opacity:.7}}
+.fcard-arrow{color:var(--text-3);font-size:.7rem;flex-shrink:0;transition:transform .15s}
+.fcard:active .fcard-arrow{transform:translateX(3px)}
 
-.feature-icon {
-  width: 52px; height: 52px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.3rem; flex-shrink: 0;
-  border: 2px solid rgba(0,0,0,.08);
-}
-.fi-photo { background: linear-gradient(135deg, #a78bfa, #7c3aed); color: #fff; }
-.fi-draw { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #fff; }
-.fi-id { background: linear-gradient(135deg, #34d399, #059669); color: #fff; }
+/* Stats bar */
+.stats-bar{display:flex;justify-content:center;gap:24px;padding:20px 0 8px}
+.stat-item{text-align:center}
+.stat-num{font-family:var(--pixel);font-size:.9rem;color:var(--green);display:block}
+.stat-label{font-size:.55rem;color:rgba(255,255,255,.35);margin-top:2px}
 
-.feature-info h3 { font-size: .78rem; font-weight: 600; color: var(--text); margin-bottom: 2px; }
-.feature-info p { font-size: .6rem; color: var(--text-mid); line-height: 1.5; }
-
-/* Pixel tag badge */
-.pixel-tag {
-  display: inline-block; padding: 1px 6px; font-size: .5rem;
-  background: var(--accent); color: #1a1a2e; margin-left: 6px;
-  vertical-align: middle; font-weight: 700; letter-spacing: .5px;
-}
+/* Footer */
+.home-ft{text-align:center;padding:24px 0 16px}
+.home-ft-text{font-family:var(--pixel);font-size:.45rem;color:rgba(255,255,255,.15);letter-spacing:2px}
 
 /* ═══ UPLOAD ═══ */
-.upload-area {
-  margin: 0 16px; border: var(--px) dashed var(--accent);
-  padding: 32px 20px; text-align: center; cursor: pointer;
-  background: var(--surface); position: relative; z-index: 1;
-  transition: border-color .2s;
-}
-.upload-area:active { border-color: var(--yellow); }
-.upload-area.has-image { border-style: solid; padding: 0; overflow: hidden; }
-.upload-area.has-image img { width: 100%; display: block; }
-.upload-icon { font-size: 2.2rem; margin-bottom: 8px; filter: grayscale(.2); }
-.upload-text { font-size: .72rem; color: var(--text-mid); }
-.upload-hint { font-size: .58rem; color: var(--text-light); margin-top: 4px; }
-input[type="file"] { display: none; }
+.upload-zone{margin:0 20px;border-radius:var(--r);overflow:hidden;position:relative;z-index:1;
+  background:var(--surface);box-shadow:var(--card-shadow);cursor:pointer}
+.upload-inner{padding:40px 20px;text-align:center;border:2px dashed rgba(124,92,252,.25);
+  margin:12px;border-radius:var(--r-sm);transition:border-color .2s}
+.upload-inner:active{border-color:var(--accent)}
+.upload-zone.has-img .upload-inner{padding:0;border:none;margin:0}
+.upload-zone.has-img img{width:100%;display:block;border-radius:var(--r)}
+.upload-emoji{font-size:2.4rem;margin-bottom:10px;display:block;filter:drop-shadow(0 2px 6px rgba(0,0,0,.1))}
+.upload-text{font-size:.8rem;color:var(--text);font-weight:600}
+.upload-hint{font-size:.65rem;color:var(--text-3);margin-top:4px}
+input[type=file]{display:none}
 
 /* ═══ SETTINGS ═══ */
-.settings-card {
-  margin: 14px 16px 0; background: var(--surface);
-  border: var(--px) solid var(--accent);
-  position: relative; z-index: 1; overflow: hidden;
-}
-.settings-card::after {
-  content: ''; position: absolute;
-  bottom: calc(var(--px) * -2); right: calc(var(--px) * -2);
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,.1);
-  z-index: -1;
-}
-.setting-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; }
-.setting-row + .setting-row { border-top: 1px solid #eee; }
-.setting-label { font-size: .7rem; color: var(--text); }
-.setting-sub { font-size: .58rem; color: var(--text-light); }
+.s-card{margin:14px 20px 0;background:var(--surface);border-radius:var(--r);box-shadow:var(--card-shadow);overflow:hidden;position:relative;z-index:1}
+.s-row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px}
+.s-row+.s-row{border-top:1px solid #f0eef5}
+.s-label{font-size:.78rem;color:var(--text)}
+.s-sub{font-size:.62rem;color:var(--text-3)}
 
-.picker {
-  display: flex; align-items: center; gap: 4px;
-  padding: 5px 10px; background: #f0fdf4;
-  font-size: .65rem; color: var(--accent-dark);
-  border: 2px solid var(--accent); cursor: pointer;
-}
-.picker:active { background: var(--accent); color: #fff; }
-.picker-arrow { font-size: .6rem; color: var(--text-light); margin-left: 2px; }
+.picker-btn{display:flex;align-items:center;gap:6px;
+  padding:7px 14px;border-radius:var(--r-sm);
+  background:var(--accent-bg);border:1px solid rgba(124,92,252,.15);
+  font-size:.72rem;color:var(--accent);cursor:pointer;font-family:var(--body);font-weight:500;transition:all .15s}
+.picker-btn:active{background:var(--accent);color:#fff}
+.picker-btn .arr{font-size:.5rem;opacity:.5}
 
-.toggle {
-  width: 44px; height: 22px; background: #e5e5e5;
-  position: relative; cursor: pointer; border: 2px solid #ccc;
-  transition: all .15s;
-}
-.toggle.on { background: var(--accent); border-color: var(--accent-dark); }
-.toggle-thumb { width: 18px; height: 18px; background: #fff; position: absolute; top: 0; left: 0; transition: left .12s; border: 1px solid #ddd; }
-.toggle.on .toggle-thumb { left: 22px; border-color: var(--accent-dark); }
+.toggle{width:48px;height:28px;border-radius:14px;background:#e5e5e5;position:relative;cursor:pointer;
+  transition:background .2s;border:none}
+.toggle.on{background:var(--green)}
+.toggle-k{position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:12px;
+  background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.15);transition:left .2s}
+.toggle.on .toggle-k{left:22px}
 
-.segment { display: flex; background: #f5f5f5; padding: 2px; border: 2px solid #e5e5e5; }
-.segment-btn {
-  padding: 5px 10px; font-size: .6rem; cursor: pointer;
-  color: var(--text-mid); font-family: var(--font);
-  border: none; background: none; transition: all .1s;
-}
-.segment-btn.active { background: var(--accent); color: #fff; }
+.seg{display:flex;background:#f5f3ff;border-radius:var(--r-sm);padding:3px;gap:2px}
+.seg-btn{padding:6px 14px;border-radius:8px;border:none;background:none;
+  font-size:.68rem;color:var(--text-2);cursor:pointer;font-family:var(--body);font-weight:500;transition:all .15s}
+.seg-btn.on{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(124,92,252,.25)}
 
-.color-link {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 14px; cursor: pointer; border-top: 1px solid #eee;
-}
-.color-link:active { background: var(--accent-bg); }
-.color-link-left { display: flex; align-items: center; gap: 8px; }
-.color-dots { display: flex; gap: 3px; }
-.color-dot { width: 14px; height: 14px; border: 1px solid rgba(0,0,0,.08); }
-.color-link-text { font-size: .68rem; color: var(--text); }
-.color-link-arrow { color: var(--accent-dark); font-size: .8rem; }
+.color-link{display:flex;align-items:center;padding:14px 16px;cursor:pointer;border-top:1px solid #f0eef5;transition:background .1s}
+.color-link:active{background:var(--accent-bg)}
+.cl-dots{display:flex;gap:4px;margin-right:10px}
+.cl-dot{width:16px;height:16px;border-radius:4px;border:1px solid rgba(0,0,0,.06)}
+.cl-text{flex:1;font-size:.72rem;color:var(--text)}
+.cl-arrow{color:var(--text-3);font-size:.65rem}
+
+.hint{padding:12px 20px;font-size:.62rem;color:rgba(255,255,255,.25);text-align:center;position:relative;z-index:1}
 
 /* ═══ BOTTOM BAR ═══ */
-.bottom-bar {
-  padding: 14px 16px calc(14px + var(--safe-b));
-  background: var(--dark-bar); border-top: var(--px) solid var(--accent);
-  flex-shrink: 0; position: relative; z-index: 1;
-}
-.btn-primary {
-  width: 100%; padding: 12px;
-  border: var(--px) solid var(--accent-dark);
-  background: var(--accent); color: #1a1a2e;
-  font-size: .72rem; font-weight: 700; cursor: pointer;
-  font-family: var(--font); letter-spacing: 1px;
-  position: relative; transition: transform .08s;
-}
-.btn-primary::after {
-  content: ''; position: absolute;
-  bottom: -4px; right: -4px;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,.25); z-index: -1;
-}
-.btn-primary:active { transform: translate(2px, 2px); }
-.btn-primary:active::after { transform: translate(-2px, -2px); }
-.btn-primary:disabled { background: #444; color: #666; border-color: #555; }
-.btn-primary:disabled::after { display: none; }
+.bbar{padding:12px 20px calc(12px + var(--safe-b));
+  background:rgba(26,10,62,.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-top:1px solid rgba(255,255,255,.06);flex-shrink:0;position:relative;z-index:1}
+.btn-go{width:100%;padding:14px;border:none;border-radius:var(--r-sm);
+  background:linear-gradient(135deg,var(--accent),var(--accent-light));color:#fff;
+  font-size:.82rem;font-weight:700;cursor:pointer;font-family:var(--body);
+  letter-spacing:.5px;box-shadow:0 4px 16px rgba(124,92,252,.35);
+  transition:all .15s;position:relative;overflow:hidden}
+.btn-go:active{transform:scale(.97);box-shadow:0 2px 8px rgba(124,92,252,.25)}
+.btn-go:disabled{background:#3d2580;color:rgba(255,255,255,.3);box-shadow:none}
+.btn-go::after{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+  background:linear-gradient(transparent,rgba(255,255,255,.05),transparent);
+  transform:rotate(30deg);transition:transform .5s}
+.btn-go:active::after{transform:rotate(30deg) translateY(50%)}
 
-.btn-row { display: flex; gap: 8px; }
-.btn-secondary {
-  flex: 1; padding: 10px;
-  border: 2px solid rgba(255,255,255,.15);
-  background: rgba(255,255,255,.06); color: rgba(255,255,255,.8);
-  font-size: .65rem; cursor: pointer; font-family: var(--font);
-}
-.btn-secondary:active { background: rgba(255,255,255,.12); }
+.btn-row{display:flex;gap:10px}
+.btn-sec{flex:1;padding:12px;border:1px solid rgba(255,255,255,.1);border-radius:var(--r-sm);
+  background:rgba(255,255,255,.05);color:rgba(255,255,255,.7);
+  font-size:.72rem;cursor:pointer;font-family:var(--body);transition:all .15s}
+.btn-sec:active{background:rgba(255,255,255,.1)}
 
 /* ═══ SHEETS ═══ */
-.sheet-mask { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 100; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
-.sheet-mask.show { display: block; }
-.sheet {
-  position: fixed; left: 0; right: 0; bottom: 0; max-height: 60vh;
-  background: var(--surface); border-top: var(--px) solid var(--accent);
-  z-index: 101; transform: translateY(100%);
-  transition: transform .25s cubic-bezier(.22,.68,0,1);
-  overflow: hidden; display: flex; flex-direction: column;
-}
-.sheet-mask.show .sheet { transform: translateY(0); }
-.sheet-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 16px; border-bottom: 1px solid #eee;
-}
-.sheet-title { font-size: .72rem; font-weight: 600; color: var(--text); }
-.sheet-close { font-size: .65rem; color: var(--accent-dark); cursor: pointer; }
-.sheet-body { overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: env(safe-area-inset-bottom, 16px); }
-.sheet-item { display: flex; align-items: center; padding: 12px 16px; cursor: pointer; transition: background .1s; }
-.sheet-item:active { background: var(--accent-bg); }
-.sheet-item + .sheet-item { border-top: 1px solid #f5f5f5; }
-.sheet-item-name { flex: 1; font-size: .68rem; }
-.sheet-item-meta { font-size: .58rem; color: var(--text-light); margin-right: 8px; }
-.sheet-item-check {
-  width: 18px; height: 18px; border: 2px solid #ddd;
-  display: flex; align-items: center; justify-content: center;
-  font-size: .55rem; color: transparent; transition: all .1s;
-}
-.sheet-item.selected { background: var(--accent-bg); }
-.sheet-item.selected .sheet-item-check { border-color: var(--accent); background: var(--accent); color: #fff; }
-.sheet-group { font-size: .58rem; color: var(--bg); padding: 10px 16px 4px; font-weight: 600; letter-spacing: 1px; }
+.sheet-mask{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.sheet-mask.show{display:block}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-height:55vh;
+  background:var(--surface);border-radius:var(--r) var(--r) 0 0;
+  z-index:101;transform:translateY(100%);transition:transform .3s cubic-bezier(.22,.68,0,1.1);
+  overflow:hidden;display:flex;flex-direction:column}
+.sheet-mask.show .sheet{transform:translateY(0)}
+.sheet-handle{width:36px;height:4px;border-radius:2px;background:#ddd;margin:10px auto 0}
+.sh-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid #f0eef5}
+.sh-title{font-size:.82rem;font-weight:700;color:var(--text)}
+.sh-done{font-size:.72rem;color:var(--accent);cursor:pointer;font-weight:600}
+.sh-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:env(safe-area-inset-bottom,16px)}
+.sh-group{font-family:var(--pixel);font-size:.5rem;color:var(--accent);padding:14px 20px 6px;letter-spacing:2px}
+.sh-item{display:flex;align-items:center;padding:14px 20px;cursor:pointer;transition:background .1s}
+.sh-item:active{background:var(--accent-bg)}
+.sh-item+.sh-item{border-top:1px solid #f8f6ff}
+.sh-name{flex:1;font-size:.78rem;color:var(--text)}
+.sh-meta{font-size:.62rem;color:var(--text-3);margin-right:12px}
+.sh-check{width:20px;height:20px;border:2px solid #e0dce8;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;font-size:.55rem;color:transparent;transition:all .15s}
+.sh-item.sel{background:var(--accent-bg)}
+.sh-item.sel .sh-check{border-color:var(--accent);background:var(--accent);color:#fff}
 
 /* ═══ COLOR FILTER ═══ */
-.color-toolbar {
-  display: flex; align-items: center; gap: 8px; padding: 10px 16px;
-  background: var(--surface); border-bottom: var(--px) solid var(--accent);
-  position: sticky; top: 50px; z-index: 10;
-}
-.color-toolbar-btn {
-  font-size: .58rem; padding: 4px 10px;
-  border: 2px solid var(--accent); background: var(--surface);
-  cursor: pointer; color: var(--accent-dark); font-family: var(--font);
-}
-.color-toolbar-btn:active { background: var(--accent); color: #fff; }
-.color-toolbar-info { flex: 1; text-align: right; font-size: .58rem; color: rgba(255,255,255,.5); }
-.color-group-title {
-  font-size: .62rem; font-weight: 600; color: var(--yellow);
-  padding: 14px 16px 6px; position: sticky; top: 92px;
-  background: var(--bg); z-index: 5;
-  text-shadow: 1px 1px 0 rgba(0,0,0,.2);
-}
-.color-grid { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px 16px 8px; }
-.color-cell-wrap { text-align: center; width: 40px; }
-.color-cell {
-  width: 40px; height: 34px; cursor: pointer; position: relative;
-  border: 2px solid rgba(255,255,255,.1); transition: all .12s;
-}
-.color-cell:active { transform: scale(.9); }
-.color-cell.selected { border-color: #fff; box-shadow: 0 0 12px rgba(255,255,255,.35); }
-.color-cell .check {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  font-size: .55rem; font-weight: 700; color: #fff; opacity: 0;
-  text-shadow: 1px 1px 0 rgba(0,0,0,.4);
-}
-.color-cell.selected .check { opacity: 1; }
-.color-code { font-size: .48rem; color: rgba(255,255,255,.45); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.c-toolbar{display:flex;align-items:center;gap:8px;padding:10px 20px;
+  background:rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.06);
+  position:sticky;top:58px;z-index:10;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.c-tb-btn{padding:6px 14px;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.05);font-size:.65rem;color:rgba(255,255,255,.6);cursor:pointer;font-family:var(--body);transition:all .15s}
+.c-tb-btn:active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.c-tb-info{flex:1;text-align:right;font-family:var(--pixel);font-size:.5rem;color:rgba(255,255,255,.3)}
+
+.c-group{font-family:var(--pixel);font-size:.55rem;color:var(--green);
+  padding:16px 20px 8px;position:sticky;top:98px;z-index:5;
+  background:linear-gradient(180deg,var(--bg-2),transparent);letter-spacing:1px}
+.c-grid{display:flex;flex-wrap:wrap;gap:6px;padding:4px 20px 10px}
+.c-wrap{text-align:center;width:42px}
+.c-cell{width:42px;height:36px;border-radius:6px;cursor:pointer;position:relative;
+  border:2px solid rgba(255,255,255,.08);transition:all .15s;overflow:hidden}
+.c-cell:active{transform:scale(.88)}
+.c-cell.sel{border-color:#fff;box-shadow:0 0 16px rgba(255,255,255,.2)}
+.c-cell .ck{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:.55rem;font-weight:700;color:#fff;opacity:0;text-shadow:0 1px 3px rgba(0,0,0,.4)}
+.c-cell.sel .ck{opacity:1}
+.c-code{font-family:var(--pixel);font-size:.4rem;color:rgba(255,255,255,.3);margin-top:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* ═══ RESULT ═══ */
-.result-toolbar { display: flex; gap: 6px; padding: 10px 16px; overflow-x: auto; flex-shrink: 0; position: relative; z-index: 1; }
-.tool-btn {
-  padding: 6px 12px; border: 2px solid rgba(255,255,255,.2);
-  background: rgba(255,255,255,.08); font-size: .58rem;
-  cursor: pointer; white-space: nowrap; font-family: var(--font); color: rgba(255,255,255,.7);
-  transition: all .1s;
-}
-.tool-btn.active, .tool-btn:active { background: var(--accent); color: #1a1a2e; border-color: var(--accent); }
-.canvas-wrap { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 12px 16px; overflow: auto; position: relative; z-index: 1; }
-.canvas-wrap canvas { max-width: 100%; border: var(--px) solid var(--accent); box-shadow: 6px 6px 0 rgba(0,0,0,.15); image-rendering: pixelated; }
+.r-toolbar{display:flex;gap:6px;padding:10px 20px;overflow-x:auto;flex-shrink:0;position:relative;z-index:1}
+.r-btn{padding:8px 16px;border-radius:var(--r-sm);
+  border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);
+  font-size:.65rem;cursor:pointer;white-space:nowrap;font-family:var(--body);
+  color:rgba(255,255,255,.55);transition:all .15s}
+.r-btn.on,.r-btn:active{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 2px 8px rgba(124,92,252,.3)}
 
-.stats-panel { padding: 0 16px 16px; flex: 1; overflow-y: auto; position: relative; z-index: 1; }
-.stat-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.08); }
-.stat-swatch { width: 26px; height: 26px; flex-shrink: 0; border: 2px solid rgba(255,255,255,.15); }
-.stat-info { flex: 1; }
-.stat-name { font-size: .68rem; color: #fff; }
-.stat-code { font-size: .55rem; color: rgba(255,255,255,.4); }
-.stat-num { font-size: .72rem; font-weight: 600; color: var(--accent); }
-.stat-total { display: flex; justify-content: space-between; padding: 12px 0; font-weight: 600; font-size: .8rem; color: #fff; }
+.cv-wrap{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:12px 20px;overflow:auto;position:relative;z-index:1}
+.cv-wrap canvas{max-width:100%;border-radius:var(--r-sm);box-shadow:0 4px 24px rgba(0,0,0,.3);image-rendering:pixelated}
+
+.st-panel{padding:0 20px 20px;flex:1;overflow-y:auto;position:relative;z-index:1}
+.st-head{font-size:.72rem;font-weight:600;color:rgba(255,255,255,.6);padding:14px 0 10px}
+.st-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.st-sw{width:28px;height:28px;flex-shrink:0;border-radius:6px;border:1px solid rgba(255,255,255,.1)}
+.st-info{flex:1}
+.st-name{font-size:.72rem;color:rgba(255,255,255,.85)}
+.st-code{font-size:.55rem;color:rgba(255,255,255,.3)}
+.st-n{font-family:var(--pixel);font-size:.75rem;color:var(--green)}
+.st-total{display:flex;justify-content:space-between;padding:14px 0;font-weight:700;font-size:.85rem;color:#fff;border-top:1px solid rgba(255,255,255,.1)}
 
 /* ═══ DRAW ═══ */
-.draw-palette {
-  display: flex; flex-wrap: wrap; gap: 3px; padding: 8px 16px;
-  background: var(--surface); border-bottom: var(--px) solid var(--accent);
-  flex-shrink: 0; position: relative; z-index: 1;
-}
-.draw-swatch {
-  width: 28px; height: 28px; cursor: pointer;
-  border: 2px solid transparent; transition: all .1s;
-}
-.draw-swatch.active { border-color: var(--text); box-shadow: 0 0 0 2px var(--accent); }
-.draw-eraser {
-  width: 28px; height: 28px; cursor: pointer;
-  border: 2px solid #e5e5e5; display: flex; align-items: center;
-  justify-content: center; font-size: .7rem; background: var(--surface);
-}
-.draw-eraser.active { border-color: #ff5555; background: #ff5555; color: #fff; }
+.draw-pal{display:flex;flex-wrap:wrap;gap:4px;padding:10px 20px;
+  background:var(--surface);border-bottom:1px solid #f0eef5;flex-shrink:0;position:relative;z-index:1}
+.d-sw{width:30px;height:30px;border-radius:6px;cursor:pointer;border:2px solid transparent;transition:all .12s}
+.d-sw.on{border-color:var(--text);box-shadow:0 0 0 2px var(--accent)}
+.d-eraser{width:30px;height:30px;border-radius:6px;cursor:pointer;
+  border:2px solid #e5e5e5;display:flex;align-items:center;justify-content:center;
+  font-size:.7rem;background:var(--surface);transition:all .12s}
+.d-eraser.on{border-color:#ef4444;background:#ef4444;color:#fff}
 
 /* ═══ IDENTIFY ═══ */
-.id-picked {
-  display: flex; align-items: center; gap: 12px;
-  margin: 0 16px 16px; padding: 14px;
-  background: var(--surface); border: var(--px) solid var(--accent);
-  position: relative; z-index: 1;
-}
-.id-swatch { width: 48px; height: 48px; flex-shrink: 0; border: 2px solid #eee; }
-.id-info { flex: 1; }
-.id-hex { font-size: .75rem; font-weight: 600; font-family: var(--font); color: var(--text); }
-.id-rgb { font-size: .58rem; color: var(--text-light); }
-.match-list-title {
-  font-size: .62rem; font-weight: 600; color: #fff;
-  margin: 0 16px 8px; letter-spacing: 1px;
-  text-shadow: 1px 1px 0 rgba(0,0,0,.2); position: relative; z-index: 1;
-}
-.match-row { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--surface); }
-.match-row + .match-row { border-top: 1px solid #f0f0f0; }
-.match-swatch { width: 28px; height: 28px; flex-shrink: 0; border: 2px solid #eee; }
-.match-name { font-size: .65rem; font-weight: 500; color: var(--text); }
-.match-brand { font-size: .55rem; color: var(--text-light); }
-.match-delta { font-size: .58rem; color: var(--accent-dark); font-family: var(--font); }
-.match-wrap { margin: 0 16px; border: var(--px) solid var(--accent); overflow: hidden; position: relative; z-index: 1; }
-
-/* ═══ LOADING ANIMATION ═══ */
-.loading-bar {
-  height: 3px; background: var(--dark-bar); overflow: hidden; display: none;
-  position: relative; z-index: 1; margin: 0 16px;
-}
-.loading-bar.active { display: block; }
-.loading-bar::after {
-  content: ''; display: block; height: 100%; width: 40%;
-  background: var(--accent);
-  animation: loadSlide 1s ease-in-out infinite;
-}
-@keyframes loadSlide { 0%{transform:translateX(-100%)} 100%{transform:translateX(350%)} }
-
-/* ═══ SCROLLBAR ═══ */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-thumb { background: var(--accent); }
-::-webkit-scrollbar-track { background: rgba(0,0,0,.1); }
-
-/* ═══ MISC ═══ */
-.hint-text { padding: 10px 16px; font-size: .58rem; color: rgba(255,255,255,.35); text-align: center; position: relative; z-index: 1; }
-#drawSizeSelect { font-family: var(--font); font-size: .58rem; padding: 4px 8px; border: 2px solid var(--accent); background: transparent; color: var(--accent); }
-#idCanvas { max-width:100%; border: var(--px) solid var(--accent) !important; box-shadow: 4px 4px 0 rgba(0,0,0,.15) !important; border-radius: 0 !important; }
+.id-picked{display:flex;align-items:center;gap:14px;margin:0 20px 16px;padding:16px;
+  background:var(--surface);border-radius:var(--r);box-shadow:var(--card-shadow);position:relative;z-index:1}
+.id-sw{width:52px;height:52px;flex-shrink:0;border-radius:var(--r-sm);border:1px solid #f0eef5}
+.id-hex{font-family:var(--pixel);font-size:.82rem;font-weight:600;color:var(--text)}
+.id-rgb{font-size:.62rem;color:var(--text-3);margin-top:2px}
+.m-title{font-family:var(--pixel);font-size:.55rem;color:var(--green);
+  margin:0 20px 10px;letter-spacing:1px;position:relative;z-index:1}
+.m-wrap{margin:0 20px;border-radius:var(--r);overflow:hidden;box-shadow:var(--card-shadow);position:relative;z-index:1}
+.m-row{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--surface)}
+.m-row+.m-row{border-top:1px solid #f0eef5}
+.m-sw{width:30px;height:30px;flex-shrink:0;border-radius:6px;border:1px solid #f0eef5}
+.m-info{flex:1}.m-name{font-size:.72rem;font-weight:500;color:var(--text)}
+.m-brand{font-size:.58rem;color:var(--text-3)}
+.m-de{font-family:var(--pixel);font-size:.6rem;color:var(--accent)}
 
 /* ═══ TOAST ═══ */
-.pixel-toast {
-  position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(20px);
-  background: var(--dark-bar); color: var(--accent); border: 2px solid var(--accent);
-  padding: 8px 16px; font-size: .6rem; font-family: var(--font);
-  z-index: 200; opacity: 0; transition: all .2s;
-  pointer-events: none;
-}
-.pixel-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(12px);
+  background:rgba(26,10,62,.92);color:#fff;border:1px solid rgba(124,92,252,.3);
+  padding:10px 20px;border-radius:var(--r-sm);font-size:.72rem;font-family:var(--body);
+  z-index:200;opacity:0;transition:all .25s;pointer-events:none;
+  backdrop-filter:blur(12px);box-shadow:0 4px 16px rgba(0,0,0,.3)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* ═══ FOOTER ═══ */
-.home-footer {
-  text-align: center; padding: 16px; font-size: .5rem;
-  color: rgba(255,255,255,.25); position: relative; z-index: 1;
-}
-.home-footer a { color: var(--accent); text-decoration: none; }
+/* ═══ SCROLLBAR ═══ */
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:rgba(124,92,252,.3);border-radius:2px}
+::-webkit-scrollbar-track{background:transparent}
+
+#idCanvas{max-width:100%;border-radius:var(--r-sm)!important;
+  box-shadow:0 4px 16px rgba(0,0,0,.2)!important;cursor:crosshair}
+#drawSizeSelect{font-family:var(--body);font-size:.68rem;padding:6px 10px;
+  border-radius:var(--r-sm);border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.08);color:#fff;-webkit-appearance:none}
 </style>
 </head>
 <body>
 <div class="app" id="app">
+<div class="bg-grid"></div>
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
 
-  <!-- HOME -->
-  <div class="page active" id="pageHome">
-    <div class="header"><span class="header-title">拼豆工坊</span></div>
-    <div class="page-body">
-      <div class="home">
-        <!-- Pixel stars -->
-        <div class="pixel-stars" id="pixelStars"></div>
+<!-- HOME -->
+<div class="page active" id="pageHome">
+  <div class="hd"><span class="hd-title">拼豆工坊</span></div>
+  <div class="page-body">
+    <div class="home">
+      <div class="hero">
+        <div class="hero-badge">PIXEL BEAD STUDIO</div>
+        <span class="hero-icon">🧩</span>
+        <h1>拼豆工坊</h1>
+        <div class="hero-sub">CREATE · MATCH · BUILD</div>
+      </div>
 
-        <!-- Banner -->
-        <div class="home-banner">
-          <span class="home-logo">🎮</span>
-          <div class="home-title">拼豆工坊</div>
-          <div class="home-desc">PERLER BEAD STUDIO</div>
-        </div>
-
-        <!-- Cards -->
-        <div class="feature-card" onclick="nav('photo')">
-          <div class="feature-icon fi-photo">📸</div>
-          <div class="feature-info">
-            <h3>照片转图纸 <span class="pixel-tag">HOT</span></h3>
-            <p>上传照片 AI智能匹配色号生成图纸</p>
+      <div class="cards">
+        <div class="fcard" onclick="nav('photo')">
+          <div class="fcard-icon fi-1">📸</div>
+          <div class="fcard-body">
+            <h3>照片转图纸 <span class="tag-hot">HOT</span></h3>
+            <p>AI 智能匹配色号 一键生成拼豆图纸</p>
           </div>
+          <span class="fcard-arrow">›</span>
         </div>
-        <div class="feature-card" onclick="nav('draw')">
-          <div class="feature-icon fi-draw">🎨</div>
-          <div class="feature-info">
+        <div class="fcard" onclick="nav('draw')">
+          <div class="fcard-icon fi-2">🎨</div>
+          <div class="fcard-body">
             <h3>画豆图</h3>
-            <p>网格上像素级创作拼豆作品</p>
+            <p>网格上像素级创作你的拼豆作品</p>
           </div>
+          <span class="fcard-arrow">›</span>
         </div>
-        <div class="feature-card" onclick="nav('identify')">
-          <div class="feature-icon fi-id">🔍</div>
-          <div class="feature-info">
+        <div class="fcard" onclick="nav('identify')">
+          <div class="fcard-icon fi-3">🔍</div>
+          <div class="fcard-body">
             <h3>识别色号</h3>
-            <p>拍照取色 跨9个品牌匹配色号</p>
+            <p>拍照取色 跨 9 个品牌精准匹配</p>
           </div>
-        </div>
-
-        <div class="home-footer">
-          PIXEL BEAD TOOL v1.0 · 9品牌 · 903+色号<br>
-          CIE Lab ΔE 专业色彩匹配算法
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- PHOTO -->
-  <div class="page" id="pagePhoto">
-    <div class="header">
-      <button class="header-back" onclick="nav('home')">◂</button>
-      <span class="header-title">照片转图纸</span>
-    </div>
-    <div class="page-body">
-      <div class="upload-area" id="uploadZone" onclick="document.getElementById('fileInput').click()">
-        <div class="upload-icon">📷</div>
-        <div class="upload-text">选择一张图片开始制作</div>
-        <div class="upload-hint">支持 JPG / PNG 建议正方形</div>
-      </div>
-      <input type="file" id="fileInput" accept="image/*">
-
-      <div class="settings-card">
-        <div class="setting-row">
-          <div class="setting-label">拼豆品牌</div>
-          <div class="picker" onclick="openSheet('brand')">
-            <span id="valBrand">MARD</span>
-            <span class="picker-arrow">▾</span>
-          </div>
-        </div>
-        <div class="setting-row">
-          <div class="setting-label">画布尺寸</div>
-          <div class="picker" onclick="openSheet('size')">
-            <span id="valSize">50×50</span>
-            <span class="picker-arrow">▾</span>
-          </div>
-        </div>
-        <div class="setting-row">
-          <div class="setting-label">填充背景色</div>
-          <div class="toggle" id="toggleFillBg" onclick="this.classList.toggle('on');fillBg=this.classList.contains('on')">
-            <div class="toggle-thumb"></div>
-          </div>
-        </div>
-        <div class="setting-row">
-          <div class="setting-label">提取模式</div>
-          <div class="segment">
-            <button class="segment-btn active" onclick="setExtractMode('standard',this)">标准</button>
-            <button class="segment-btn" onclick="setExtractMode('block',this)">像素块</button>
-          </div>
-        </div>
-        <div class="color-link" onclick="nav('colors')">
-          <div class="color-link-left">
-            <div class="color-dots" id="colorDots"></div>
-            <span class="color-link-text" id="valColors">全部 295 色</span>
-          </div>
-          <span class="color-link-arrow">▸</span>
+          <span class="fcard-arrow">›</span>
         </div>
       </div>
 
-      <div class="hint-text">支持手势缩放和拖拽调整</div>
-    </div>
-    <div class="bottom-bar">
-      <button class="btn-primary" id="btnGenerate" disabled onclick="startGenerate()">▶ 开始转换</button>
-    </div>
-  </div>
-
-  <!-- BRAND SHEET -->
-  <div class="sheet-mask" id="sheetBrand" onclick="closeSheet('brand')">
-    <div class="sheet" onclick="event.stopPropagation()">
-      <div class="sheet-header">
-        <span class="sheet-title">选择品牌</span>
-        <span class="sheet-close" onclick="closeSheet('brand')">完成</span>
+      <div class="stats-bar">
+        <div class="stat-item"><span class="stat-num">9</span><span class="stat-label">品牌</span></div>
+        <div class="stat-item"><span class="stat-num">903+</span><span class="stat-label">色号</span></div>
+        <div class="stat-item"><span class="stat-num">ΔE</span><span class="stat-label">CIE Lab</span></div>
       </div>
-      <div class="sheet-body" id="brandSheetBody"></div>
+
+      <div class="home-ft"><span class="home-ft-text">PERLER BEAD TOOL v1.0</span></div>
     </div>
   </div>
+</div>
 
-  <!-- SIZE SHEET -->
-  <div class="sheet-mask" id="sheetSize" onclick="closeSheet('size')">
-    <div class="sheet" onclick="event.stopPropagation()">
-      <div class="sheet-header">
-        <span class="sheet-title">画布尺寸</span>
-        <span class="sheet-close" onclick="closeSheet('size')">完成</span>
-      </div>
-      <div class="sheet-body" id="sizeSheetBody"></div>
-    </div>
+<!-- PHOTO -->
+<div class="page" id="pagePhoto">
+  <div class="hd">
+    <button class="hd-back" onclick="nav('home')">‹</button>
+    <span class="hd-title">照片转图纸</span>
   </div>
-
-  <!-- COLOR FILTER -->
-  <div class="page" id="pageColors">
-    <div class="header">
-      <button class="header-back" onclick="nav('photo')">◂</button>
-      <span class="header-title">色号筛选</span>
-      <span class="header-right" onclick="nav('photo')">完成</span>
-    </div>
-    <div class="color-toolbar">
-      <button class="color-toolbar-btn" onclick="selectAllColors()">全选</button>
-      <button class="color-toolbar-btn" onclick="clearAllColors()">清空</button>
-      <span class="color-toolbar-info" id="colorCountInfo">295 / 295</span>
-    </div>
-    <div class="page-body" id="colorBody"></div>
-  </div>
-
-  <!-- RESULT -->
-  <div class="page" id="pageResult">
-    <div class="header">
-      <button class="header-back" onclick="nav('photo')">◂</button>
-      <span class="header-title">图纸预览</span>
-    </div>
-    <div class="result-toolbar">
-      <button class="tool-btn active" data-view="grid" onclick="setView('grid',this)">▦ 网格</button>
-      <button class="tool-btn" data-view="round" onclick="setView('round',this)">● 圆豆</button>
-      <button class="tool-btn" data-view="pixel" onclick="setView('pixel',this)">▪ 像素</button>
-      <button class="tool-btn" onclick="toggleStats()">📊 用量</button>
-    </div>
-    <div class="canvas-wrap" id="resultCanvasWrap">
-      <canvas id="beadCanvas"></canvas>
-    </div>
-    <div class="stats-panel" id="statsPanel" style="display:none"></div>
-    <div class="bottom-bar">
-      <div class="btn-row">
-        <button class="btn-secondary" onclick="nav('photo')">◂ 返回</button>
-        <button class="btn-primary" style="flex:2" onclick="exportCanvas('beadCanvas')">💾 保存图纸</button>
+  <div class="page-body">
+    <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+      <div class="upload-inner">
+        <span class="upload-emoji">📷</span>
+        <div class="upload-text">选择一张图片</div>
+        <div class="upload-hint">支持 JPG / PNG · 建议正方形</div>
       </div>
     </div>
-  </div>
+    <input type="file" id="fileInput" accept="image/*">
 
-  <!-- DRAW -->
-  <div class="page" id="pageDraw">
-    <div class="header">
-      <button class="header-back" onclick="nav('home')">◂</button>
-      <span class="header-title">画豆图</span>
-      <select id="drawSizeSelect" onchange="initDraw()">
-        <option value="16">16×16</option>
-        <option value="26">26×26</option>
-        <option value="29" selected>29×29</option>
-        <option value="32">32×32</option>
-        <option value="50">50×50</option>
-      </select>
-    </div>
-    <div class="draw-palette" id="drawPalette"></div>
-    <div class="canvas-wrap"><canvas id="drawCanvas"></canvas></div>
-    <div class="bottom-bar">
-      <div class="btn-row">
-        <button class="btn-secondary" onclick="clearDraw()">✕ 清空</button>
-        <button class="btn-primary" style="flex:2" onclick="exportCanvas('drawCanvas')">💾 导出</button>
+    <div class="s-card">
+      <div class="s-row">
+        <span class="s-label">拼豆品牌</span>
+        <div class="picker-btn" onclick="openSheet('brand')"><span id="valBrand">MARD</span><span class="arr">▾</span></div>
+      </div>
+      <div class="s-row">
+        <span class="s-label">画布尺寸</span>
+        <div class="picker-btn" onclick="openSheet('size')"><span id="valSize">50×50</span><span class="arr">▾</span></div>
+      </div>
+      <div class="s-row">
+        <span class="s-label">填充背景色</span>
+        <div class="toggle" id="toggleFillBg" onclick="this.classList.toggle('on');fillBg=this.classList.contains('on')"><div class="toggle-k"></div></div>
+      </div>
+      <div class="s-row">
+        <span class="s-label">提取模式</span>
+        <div class="seg">
+          <button class="seg-btn on" onclick="setExtractMode('standard',this)">标准</button>
+          <button class="seg-btn" onclick="setExtractMode('block',this)">像素块</button>
+        </div>
+      </div>
+      <div class="color-link" onclick="nav('colors')">
+        <div class="cl-dots" id="colorDots"></div>
+        <span class="cl-text" id="valColors">全部 295 色</span>
+        <span class="cl-arrow">›</span>
       </div>
     </div>
+    <div class="hint">拖拽缩放调整画面 · 点击开始转换</div>
   </div>
+  <div class="bbar">
+    <button class="btn-go" id="btnGenerate" disabled onclick="startGenerate()">开始转换</button>
+  </div>
+</div>
 
-  <!-- IDENTIFY -->
-  <div class="page" id="pageIdentify">
-    <div class="header">
-      <button class="header-back" onclick="nav('home')">◂</button>
-      <span class="header-title">识别色号</span>
+<!-- BRAND SHEET -->
+<div class="sheet-mask" id="sheetBrand" onclick="closeSheet('brand')">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sh-hd"><span class="sh-title">选择品牌</span><span class="sh-done" onclick="closeSheet('brand')">完成</span></div>
+    <div class="sh-body" id="brandSheetBody"></div>
+  </div>
+</div>
+
+<!-- SIZE SHEET -->
+<div class="sheet-mask" id="sheetSize" onclick="closeSheet('size')">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sh-hd"><span class="sh-title">画布尺寸</span><span class="sh-done" onclick="closeSheet('size')">完成</span></div>
+    <div class="sh-body" id="sizeSheetBody"></div>
+  </div>
+</div>
+
+<!-- COLOR FILTER -->
+<div class="page" id="pageColors">
+  <div class="hd">
+    <button class="hd-back" onclick="nav('photo')">‹</button>
+    <span class="hd-title">色号筛选</span>
+    <span class="hd-right" onclick="nav('photo')">完成</span>
+  </div>
+  <div class="c-toolbar">
+    <button class="c-tb-btn" onclick="selectAllColors()">全选</button>
+    <button class="c-tb-btn" onclick="clearAllColors()">清空</button>
+    <span class="c-tb-info" id="colorCountInfo">295 / 295</span>
+  </div>
+  <div class="page-body" id="colorBody"></div>
+</div>
+
+<!-- RESULT -->
+<div class="page" id="pageResult">
+  <div class="hd">
+    <button class="hd-back" onclick="nav('photo')">‹</button>
+    <span class="hd-title">图纸预览</span>
+  </div>
+  <div class="r-toolbar">
+    <button class="r-btn on" data-view="grid" onclick="setView('grid',this)">▦ 网格</button>
+    <button class="r-btn" data-view="round" onclick="setView('round',this)">● 圆豆</button>
+    <button class="r-btn" data-view="pixel" onclick="setView('pixel',this)">▪ 像素</button>
+    <button class="r-btn" onclick="toggleStats()">📊 用量</button>
+  </div>
+  <div class="cv-wrap" id="resultCanvasWrap"><canvas id="beadCanvas"></canvas></div>
+  <div class="st-panel" id="statsPanel" style="display:none"></div>
+  <div class="bbar">
+    <div class="btn-row">
+      <button class="btn-sec" onclick="nav('photo')">‹ 返回</button>
+      <button class="btn-go" style="flex:2" onclick="exportCanvas('beadCanvas')">保存图纸</button>
     </div>
-    <div class="page-body">
-      <div class="upload-area" id="idUploadZone" onclick="document.getElementById('idFileInput').click()">
-        <div class="upload-icon">🔍</div>
-        <div class="upload-text">上传图片 点击取色识别</div>
+  </div>
+</div>
+
+<!-- DRAW -->
+<div class="page" id="pageDraw">
+  <div class="hd">
+    <button class="hd-back" onclick="nav('home')">‹</button>
+    <span class="hd-title">画豆图</span>
+    <select id="drawSizeSelect" onchange="initDraw()">
+      <option value="16">16×16</option>
+      <option value="26">26×26</option>
+      <option value="29" selected>29×29</option>
+      <option value="32">32×32</option>
+      <option value="50">50×50</option>
+    </select>
+  </div>
+  <div class="draw-pal" id="drawPalette"></div>
+  <div class="cv-wrap"><canvas id="drawCanvas"></canvas></div>
+  <div class="bbar">
+    <div class="btn-row">
+      <button class="btn-sec" onclick="clearDraw()">清空</button>
+      <button class="btn-go" style="flex:2" onclick="exportCanvas('drawCanvas')">导出</button>
+    </div>
+  </div>
+</div>
+
+<!-- IDENTIFY -->
+<div class="page" id="pageIdentify">
+  <div class="hd">
+    <button class="hd-back" onclick="nav('home')">‹</button>
+    <span class="hd-title">识别色号</span>
+  </div>
+  <div class="page-body">
+    <div class="upload-zone" id="idUploadZone" onclick="document.getElementById('idFileInput').click()">
+      <div class="upload-inner">
+        <span class="upload-emoji">🔍</span>
+        <div class="upload-text">上传图片 点击取色</div>
         <div class="upload-hint">支持 JPG / PNG</div>
       </div>
-      <input type="file" id="idFileInput" accept="image/*">
-      <div style="padding:0 16px 10px;text-align:center;position:relative;z-index:1">
-        <canvas id="idCanvas" style="display:none;cursor:crosshair"></canvas>
-      </div>
-      <div id="idResult"></div>
     </div>
+    <input type="file" id="idFileInput" accept="image/*">
+    <div style="padding:0 20px 10px;text-align:center;position:relative;z-index:1">
+      <canvas id="idCanvas" style="display:none"></canvas>
+    </div>
+    <div id="idResult"></div>
   </div>
+</div>
 
-  <!-- Toast -->
-  <div class="pixel-toast" id="pixelToast"></div>
+<div class="toast" id="toast"></div>
 </div>
 
 <script src="all_brands.js"></script>
 <script>
-// ═══ PIXEL STARS ═══
-(function() {
-  const container = document.getElementById('pixelStars');
-  if (!container) return;
-  for (let i = 0; i < 12; i++) {
-    const star = document.createElement('div');
-    star.className = 'pixel-star';
-    star.style.left = Math.random() * 100 + '%';
-    star.style.top = Math.random() * 100 + '%';
-    star.style.animationDelay = (Math.random() * 2) + 's';
-    star.style.animationDuration = (1.5 + Math.random() * 2) + 's';
-    container.appendChild(star);
-  }
-})();
+/* ═══ TOAST ═══ */
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1600)}
 
-// ═══ TOAST ═══
-function pixelToast(msg) {
-  const t = document.getElementById('pixelToast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 1800);
-}
-
-const BRAND_NAMES = ALL_BRAND_NAMES;
-const GROUP_NAMES = {
-  A:'A 暖黄橙',B:'B 绿色系',C:'C 蓝色系',D:'D 紫蓝系',E:'E 粉色系',F:'F 红色系',
-  G:'G 肤棕系',H:'H 黑白灰',M:'M 莫兰迪',P:'P 新色系',Q:'Q 荧光/新',R:'R 新色系II',
-  T:'T 特殊',Y:'Y 夜光',ZG:'ZG 珠光',Z:'Z 光变'
-};
-const SIZE_DATA = [
+const BRAND_NAMES=ALL_BRAND_NAMES;
+const GROUP_NAMES={A:'A 暖黄橙',B:'B 绿色系',C:'C 蓝色系',D:'D 紫蓝系',E:'E 粉色系',F:'F 红色系',G:'G 肤棕系',H:'H 黑白灰',M:'M 莫兰迪',P:'P 新色系',Q:'Q 荧光/新',R:'R 新色系II',T:'T 特殊',Y:'Y 夜光',ZG:'ZG 珠光',Z:'Z 光变'};
+const SIZE_DATA=[
   {w:16,h:16,label:'16×16',tag:'钥匙扣',beads:256,time:'30m'},
   {w:26,h:26,label:'26×26',tag:'卡通',beads:676,time:'1h'},
   {w:32,h:32,label:'32×32',tag:'装饰画',beads:1024,time:'2h'},
@@ -662,350 +523,226 @@ const SIZE_DATA = [
   {w:80,h:80,label:'80×80',tag:'精品',beads:6400,time:'10h'},
   {w:100,h:100,label:'100×100',tag:'专业',beads:10000,time:'15h'},
 ];
+let currentBrand='MARD',selectedSize={w:50,h:50},selectedColors=new Set(),sourceImg=null,beadResult=null,viewMode='grid';
+let drawColor=null,drawErasing=false,drawGrid=null,drawN=29,fillBg=false,extractMode='standard',navStack=['home'];
 
-let currentBrand = 'MARD';
-let selectedSize = {w:50,h:50};
-let selectedColors = new Set();
-let sourceImg = null;
-let beadResult = null;
-let viewMode = 'grid';
-let drawColor = null, drawErasing = false, drawGrid = null, drawN = 29;
-let fillBg = false, extractMode = 'standard';
-let navStack = ['home'];
+/* ═══ NAV ═══ */
+function nav(id){
+  const cur=navStack[navStack.length-1];if(cur===id)return;
+  const ce=document.getElementById('page'+cap(cur)),ne=document.getElementById('page'+cap(id));if(!ne)return;
+  const d={home:0,photo:1,draw:1,identify:1,colors:2,result:2},deeper=(d[id]||0)>(d[cur]||0);
+  if(deeper)navStack.push(id);else{const i=navStack.indexOf(id);navStack=i>=0?navStack.slice(0,i+1):[...navStack,id]}
+  ce.classList.remove('active','slide-in');ne.classList.remove('slide-out');
+  if(deeper){ne.classList.add('active','slide-in');setTimeout(()=>{ce.classList.remove('active');ne.classList.remove('slide-in')},300)}
+  else{ne.classList.add('active');ce.classList.add('slide-out');setTimeout(()=>{ce.classList.remove('active','slide-out')},250)}
+  if(id==='photo')updatePhotoUI();if(id==='colors')renderColorPage();if(id==='draw')initDraw();
+  if(id==='result'){renderResult();buildStats()}
+}
+function cap(s){return s[0].toUpperCase()+s.slice(1)}
 
-// ═══ NAV ═══
-function nav(pageId) {
-  const cur = navStack[navStack.length-1];
-  if (cur === pageId) return;
-  const curEl = document.getElementById('page'+cap(cur));
-  const nextEl = document.getElementById('page'+cap(pageId));
-  if (!nextEl) return;
-  const depth = {home:0, photo:1, draw:1, identify:1, colors:2, result:2};
-  const goDeeper = (depth[pageId]||0) > (depth[cur]||0);
-  if (goDeeper) navStack.push(pageId);
-  else { const idx = navStack.indexOf(pageId); navStack = idx>=0 ? navStack.slice(0,idx+1) : [...navStack, pageId]; }
-  curEl.classList.remove('active','slide-in');
-  nextEl.classList.remove('slide-out');
-  if (goDeeper) {
-    nextEl.classList.add('active','slide-in');
-    setTimeout(()=>{ curEl.classList.remove('active'); nextEl.classList.remove('slide-in'); },230);
-  } else {
-    nextEl.classList.add('active');
-    curEl.classList.add('slide-out');
-    setTimeout(()=>{ curEl.classList.remove('active','slide-out'); },230);
-  }
-  if (pageId==='photo') updatePhotoUI();
-  if (pageId==='colors') renderColorPage();
-  if (pageId==='draw') initDraw();
-  if (pageId==='result') { renderResult(); buildStats(); }
-}
-function cap(s) { return s.charAt(0).toUpperCase()+s.slice(1); }
+/* ═══ SHEETS ═══ */
+function openSheet(t){if(t==='brand')renderBrandSheet();if(t==='size')renderSizeSheet();document.getElementById('sheet'+cap(t)).classList.add('show')}
+function closeSheet(t){document.getElementById('sheet'+cap(t)).classList.remove('show');updatePhotoUI()}
 
-// ═══ SHEETS ═══
-function openSheet(type) {
-  if (type==='brand') renderBrandSheet();
-  if (type==='size') renderSizeSheet();
-  document.getElementById('sheet'+cap(type)).classList.add('show');
+function renderBrandSheet(){
+  let h='<div class="sh-group">· 国产品牌</div>';
+  for(const b of CN_BRANDS)h+=shItem(b);
+  h+='<div class="sh-group">· 国际品牌</div>';
+  for(const b of INTL_BRAND_NAMES)h+=shItem(b);
+  document.getElementById('brandSheetBody').innerHTML=h;
 }
-function closeSheet(type) {
-  document.getElementById('sheet'+cap(type)).classList.remove('show');
-  updatePhotoUI();
-}
+function shItem(b){return`<div class="sh-item ${b===currentBrand?'sel':''}" onclick="pickBrand('${b}')"><span class="sh-name">${bdn(b)}</span><span class="sh-meta">${brandCount(b)}色</span><span class="sh-check">✓</span></div>`}
 
-function renderBrandSheet() {
-  let html = '<div class="sheet-group">▸ 国产品牌</div>';
-  for (const b of CN_BRANDS) {
-    html += `<div class="sheet-item ${b===currentBrand?'selected':''}" onclick="pickBrand('${b}')">
-      <span class="sheet-item-name">${brandDisplayName(b)}</span>
-      <span class="sheet-item-meta">${brandCount(b)}色</span>
-      <span class="sheet-item-check">✓</span></div>`;
-  }
-  html += '<div class="sheet-group">▸ 国际品牌</div>';
-  for (const b of INTL_BRAND_NAMES) {
-    html += `<div class="sheet-item ${b===currentBrand?'selected':''}" onclick="pickBrand('${b}')">
-      <span class="sheet-item-name">${brandDisplayName(b)}</span>
-      <span class="sheet-item-meta">${brandCount(b)}色</span>
-      <span class="sheet-item-check">✓</span></div>`;
-  }
-  document.getElementById('brandSheetBody').innerHTML = html;
-}
+function renderSizeSheet(){
+  document.getElementById('sizeSheetBody').innerHTML=SIZE_DATA.map(s=>{
+    const sel=s.w===selectedSize.w&&s.h===selectedSize.h;
+    return`<div class="sh-item ${sel?'sel':''}" onclick="pickSize(${s.w},${s.h})"><span class="sh-name">${s.label} <span style="font-size:.6rem;color:var(--text-3)">${s.tag}</span></span><span class="sh-meta">${s.beads}颗 · ${s.time}</span><span class="sh-check">✓</span></div>`}).join('')}
 
-function renderSizeSheet() {
-  let html = '';
-  for (const s of SIZE_DATA) {
-    const sel = s.w===selectedSize.w && s.h===selectedSize.h;
-    html += `<div class="sheet-item ${sel?'selected':''}" onclick="pickSize(${s.w},${s.h})">
-      <span class="sheet-item-name">${s.label} <span style="font-size:.55rem;color:var(--text-light)">${s.tag}</span></span>
-      <span class="sheet-item-meta">${s.beads}颗 · ${s.time}</span>
-      <span class="sheet-item-check">✓</span></div>`;
-  }
-  document.getElementById('sizeSheetBody').innerHTML = html;
-}
+function pickBrand(b){currentBrand=b;selectedColors=new Set(allColors().map(c=>c.hex));toast(bdn(b)+' 已选择');closeSheet('brand')}
+function pickSize(w,h){selectedSize={w,h};toast(w+'×'+h);closeSheet('size')}
 
-function pickBrand(b) {
-  currentBrand = b;
-  selectedColors = new Set(allColors().map(c=>c.hex));
-  pixelToast('已切换到 ' + brandDisplayName(b));
-  closeSheet('brand');
+/* ═══ BRAND UTILS ═══ */
+function isIntl(b){return INTL_BRAND_NAMES.includes(b||currentBrand)}
+function isKaka(b){return(b||currentBrand)==='卡卡'}
+function allColors(brand){
+  brand=brand||currentBrand;
+  if(isIntl(brand))return INTL_BRANDS[brand].map(c=>({hex:c.hex,code:c.code,name:c.name,group:c.code.replace(/\d+/,'')}));
+  if(isKaka(brand)){const a=[];for(const[g,cs]of Object.entries(KAKA_DB))cs.forEach(c=>a.push({...c,group:g}));return a}
+  const a=[];for(const[g,cs]of Object.entries(COLOR_DB))cs.forEach(c=>a.push({...c,group:g}));return a
 }
-function pickSize(w,h) {
-  selectedSize = {w,h};
-  pixelToast(w + '×' + h + ' 画布');
-  closeSheet('size');
+function brandCount(b){
+  if(INTL_BRAND_NAMES.includes(b))return INTL_BRANDS[b].length;
+  if(b==='卡卡')return Object.values(KAKA_DB).reduce((s,a)=>s+a.length,0);
+  if(['COCO','漫漫','盼盼','咪小窝'].includes(b)){let n=0;for(const cs of Object.values(COLOR_DB))for(const c of cs)if(c[b])n++;return n}
+  return Object.values(COLOR_DB).reduce((s,a)=>s+a.length,0)
 }
+function bdn(b){return b==='Artkal_S'?'Artkal S':b}
 
-// ═══ BRAND HELPERS ═══
-function isIntlBrand(b) { return INTL_BRAND_NAMES.includes(b||currentBrand); }
-function isKakaBrand(b) { return (b||currentBrand)==='卡卡'; }
-function allColors(brand) {
-  brand = brand||currentBrand;
-  if (isIntlBrand(brand)) return INTL_BRANDS[brand].map(c=>({hex:c.hex,code:c.code,name:c.name,group:c.code.replace(/\d+/,'')}));
-  if (isKakaBrand(brand)) { const a=[]; for (const [g,cs] of Object.entries(KAKA_DB)) cs.forEach(c=>a.push({...c,group:g})); return a; }
-  const a=[]; for (const [g,cs] of Object.entries(COLOR_DB)) cs.forEach(c=>a.push({...c,group:g})); return a;
+/* ═══ PHOTO UI ═══ */
+function updatePhotoUI(){
+  document.getElementById('valBrand').textContent=bdn(currentBrand);
+  const s=SIZE_DATA.find(s=>s.w===selectedSize.w&&s.h===selectedSize.h);
+  document.getElementById('valSize').textContent=s?s.label:`${selectedSize.w}×${selectedSize.h}`;
+  const tot=allColors().length,cnt=selectedColors.size;
+  document.getElementById('valColors').textContent=cnt===tot?`全部 ${tot} 色`:`已选 ${cnt} / ${tot}`;
+  document.getElementById('colorDots').innerHTML=allColors().slice(0,5).map(c=>`<div class="cl-dot" style="background:${c.hex}"></div>`).join('');
+  document.getElementById('btnGenerate').disabled=!sourceImg;
 }
-function brandCount(b) {
-  if (INTL_BRAND_NAMES.includes(b)) return INTL_BRANDS[b].length;
-  if (b==='卡卡') return Object.values(KAKA_DB).reduce((s,a)=>s+a.length,0);
-  if (['COCO','漫漫','盼盼','咪小窝'].includes(b)) { let n=0; for (const cs of Object.values(COLOR_DB)) for (const c of cs) if(c[b]) n++; return n; }
-  return Object.values(COLOR_DB).reduce((s,a)=>s+a.length,0);
-}
-function brandDisplayName(b) { return b==='Artkal_S'?'Artkal S':b; }
+document.getElementById('fileInput').addEventListener('change',e=>{if(e.target.files[0])loadImg(e.target.files[0])});
+function loadImg(file){
+  const r=new FileReader();r.onload=e=>{const img=new Image();img.onload=()=>{sourceImg=img;
+    const z=document.getElementById('uploadZone');z.classList.add('has-img');
+    z.querySelector('.upload-inner').innerHTML=`<img src="${e.target.result}">`;
+    updatePhotoUI();toast('图片已加载')};img.src=e.target.result};r.readAsDataURL(file)}
+function setExtractMode(m,el){extractMode=m;el.parentElement.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('on'));el.classList.add('on')}
 
-// ═══ PHOTO UI ═══
-function updatePhotoUI() {
-  document.getElementById('valBrand').textContent = brandDisplayName(currentBrand);
-  const s = SIZE_DATA.find(s=>s.w===selectedSize.w&&s.h===selectedSize.h);
-  document.getElementById('valSize').textContent = s ? s.label : `${selectedSize.w}×${selectedSize.h}`;
-  const total = allColors().length;
-  const cnt = selectedColors.size;
-  document.getElementById('valColors').textContent = cnt===total ? `全部 ${total} 色` : `已选 ${cnt} / ${total} 色`;
-  const dots = document.getElementById('colorDots');
-  const preview = allColors().slice(0,5);
-  dots.innerHTML = preview.map(c=>`<div class="color-dot" style="background:${c.hex}"></div>`).join('');
-  document.getElementById('btnGenerate').disabled = !sourceImg;
-}
+function startGenerate(){
+  if(!sourceImg||!selectedColors.size)return;
+  const btn=document.getElementById('btnGenerate');btn.disabled=true;btn.textContent='转换中...';
+  setTimeout(()=>{generatePattern();btn.disabled=false;btn.textContent='开始转换'},100)}
 
-document.getElementById('fileInput').addEventListener('change', e => {
-  if (e.target.files[0]) loadImg(e.target.files[0]);
-});
-
-function loadImg(file) {
-  const reader = new FileReader();
-  reader.onload = e => {
-    const img = new Image();
-    img.onload = () => {
-      sourceImg = img;
-      const zone = document.getElementById('uploadZone');
-      zone.classList.add('has-image');
-      zone.innerHTML = `<img src="${e.target.result}">`;
-      zone.onclick = () => document.getElementById('fileInput').click();
-      updatePhotoUI();
-      pixelToast('图片已加载');
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
-}
-
-function setExtractMode(mode, el) {
-  extractMode = mode;
-  el.parentElement.querySelectorAll('.segment-btn').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active');
-}
-
-// ═══ GENERATE with loading ═══
-function startGenerate() {
-  if(!sourceImg||!selectedColors.size) return;
-  const btn = document.getElementById('btnGenerate');
-  btn.disabled = true; btn.textContent = '⏳ 转换中...';
-  setTimeout(() => {
-    generatePattern();
-    btn.disabled = false; btn.textContent = '▶ 开始转换';
-  }, 100);
-}
-
-// ═══ COLOR PAGE ═══
-function renderColorPage() {
-  const body = document.getElementById('colorBody');
-  let html = '';
-  if (isIntlBrand()) {
-    const colors = INTL_BRANDS[currentBrand];
-    const groups = {};
-    for (const c of colors) { const p=c.code.replace(/\d+/g,''); if(!groups[p]) groups[p]=[]; groups[p].push(c); }
-    for (const [prefix,grp] of Object.entries(groups)) {
-      html += `<div class="color-group-title">▸ ${prefix} (${grp.length})</div><div class="color-grid">`;
-      for (const c of grp) {
-        html += `<div class="color-cell-wrap"><div class="color-cell ${selectedColors.has(c.hex)?'selected':''}" style="background:${c.hex}" onclick="toggleColor('${c.hex}')"><div class="check">✓</div></div><div class="color-code">${c.code}</div></div>`;
-      }
-      html += '</div>';
-    }
-  } else if (isKakaBrand()) {
-    for (const [g,colors] of Object.entries(KAKA_DB)) {
-      if(!colors?.length) continue;
-      html += `<div class="color-group-title">▸ 卡卡 (${colors.length})</div><div class="color-grid">`;
-      for (const c of colors) { html += colorCellHtml(c.hex, c.code, c.type); }
-      html += '</div>';
-    }
-  } else {
+/* ═══ COLOR PAGE ═══ */
+function renderColorPage(){
+  const body=document.getElementById('colorBody');let html='';
+  if(isIntl()){
+    const groups={};for(const c of INTL_BRANDS[currentBrand]){const p=c.code.replace(/\d+/g,'');if(!groups[p])groups[p]=[];groups[p].push(c)}
+    for(const[p,grp]of Object.entries(groups)){html+=`<div class="c-group">${p} (${grp.length})</div><div class="c-grid">`;
+      for(const c of grp)html+=ccHtml(c.hex,c.code);html+='</div>'}
+  }else if(isKaka()){
+    for(const[g,colors]of Object.entries(KAKA_DB)){if(!colors?.length)continue;
+      html+=`<div class="c-group">卡卡 (${colors.length})</div><div class="c-grid">`;
+      for(const c of colors)html+=ccHtml(c.hex,c.code,c.type);html+='</div>'}
+  }else{
     const order='Z A B C D E F G H M P Q R T Y ZG'.split(' ');
     const groups=Object.keys(COLOR_DB).sort((a,b)=>order.indexOf(a)-order.indexOf(b));
-    for (const g of groups) {
-      const colors=COLOR_DB[g]; if(!colors?.length) continue;
-      html += `<div class="color-group-title">▸ ${GROUP_NAMES[g]||g} (${colors.length})</div><div class="color-grid">`;
-      for (const c of colors) { const code=c[currentBrand]||c.MARD; if(!code) continue; html += colorCellHtml(c.hex, code, c.type); }
-      html += '</div>';
-    }
+    for(const g of groups){const colors=COLOR_DB[g];if(!colors?.length)continue;
+      html+=`<div class="c-group">${GROUP_NAMES[g]||g} (${colors.length})</div><div class="c-grid">`;
+      for(const c of colors){const code=c[currentBrand]||c.MARD;if(!code)continue;html+=ccHtml(c.hex,code,c.type)}html+='</div>'}
   }
-  body.innerHTML = html;
-  updateColorCount();
+  body.innerHTML=html;updateColorCount()
 }
-function colorCellHtml(hex, code, type) {
-  const tt = typeTag(type);
-  return `<div class="color-cell-wrap"><div class="color-cell ${selectedColors.has(hex)?'selected':''}" style="background:${hex}" onclick="toggleColor('${hex}')"><div class="check">✓</div></div><div class="color-code">${code}${tt}</div></div>`;
-}
-function typeTag(t) {
-  if(!t||t==='normal') return '';
-  const m={transparent:' 透',glow:' 夜',pearlescent:' 珠',light:' 光',temperatrue:' 温'};
-  return m[t] ? ` <span style="font-size:.45rem;color:rgba(255,255,255,.35)">${m[t]}</span>` : '';
-}
-function toggleColor(hex) {
-  if(selectedColors.has(hex)) selectedColors.delete(hex); else selectedColors.add(hex);
-  document.querySelectorAll('.color-cell').forEach(el => {
-    if(el.style.background===hex || rgbMatch(el.style.background,hex)) el.classList.toggle('selected',selectedColors.has(hex));
-  });
-  updateColorCount();
-}
-function rgbMatch(rgb,hex) { if(!hex) return false; const [r,g,b]=hexRgb(hex); return rgb.includes(`${r}, ${g}, ${b}`); }
-function selectAllColors() { allColors().forEach(c=>selectedColors.add(c.hex)); renderColorPage(); pixelToast('已全选'); }
-function clearAllColors() { selectedColors.clear(); renderColorPage(); pixelToast('已清空'); }
-function updateColorCount() { document.getElementById('colorCountInfo').textContent = `${selectedColors.size} / ${allColors().length}`; }
+function ccHtml(hex,code,type){
+  const tt=typeTag(type);
+  return`<div class="c-wrap"><div class="c-cell ${selectedColors.has(hex)?'sel':''}" style="background:${hex}" onclick="toggleColor('${hex}')"><div class="ck">✓</div></div><div class="c-code">${code}${tt}</div></div>`}
+function typeTag(t){if(!t||t==='normal')return'';const m={transparent:' 透',glow:' 夜',pearlescent:' 珠',light:' 光',temperatrue:' 温'};return m[t]||''}
+function toggleColor(hex){
+  if(selectedColors.has(hex))selectedColors.delete(hex);else selectedColors.add(hex);
+  document.querySelectorAll('.c-cell').forEach(el=>{if(el.style.background===hex||rgbMatch(el.style.background,hex))el.classList.toggle('sel',selectedColors.has(hex))});updateColorCount()}
+function rgbMatch(rgb,hex){if(!hex)return false;const[r,g,b]=hexRgb(hex);return rgb.includes(`${r}, ${g}, ${b}`)}
+function selectAllColors(){allColors().forEach(c=>selectedColors.add(c.hex));renderColorPage();toast('已全选')}
+function clearAllColors(){selectedColors.clear();renderColorPage();toast('已清空')}
+function updateColorCount(){document.getElementById('colorCountInfo').textContent=`${selectedColors.size} / ${allColors().length}`}
 
-// ═══ COLOR SCIENCE ═══
-function hexRgb(h) { return [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)]; }
-function rgb2lab([r,g,b]) {
+/* ═══ COLOR SCIENCE ═══ */
+function hexRgb(h){return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)]}
+function rgb2lab([r,g,b]){
   let rl=r/255,gl=g/255,bl=b/255;
-  rl=rl>.04045?((rl+.055)/1.055)**2.4:rl/12.92;
-  gl=gl>.04045?((gl+.055)/1.055)**2.4:gl/12.92;
-  bl=bl>.04045?((bl+.055)/1.055)**2.4:bl/12.92;
-  let x=(rl*.4124564+gl*.3575761+bl*.1804375)/.95047;
-  let y=rl*.2126729+gl*.7151522+bl*.0721750;
-  let z=(rl*.0193339+gl*.1191920+bl*.9503041)/1.08883;
-  const f=v=>v>.008856?Math.cbrt(v):7.787*v+16/116;
-  return [116*f(y)-16,500*(f(x)-f(y)),200*(f(y)-f(z))];
-}
-function dE(a,b) { return Math.sqrt((a[0]-b[0])**2+(a[1]-b[1])**2+(a[2]-b[2])**2); }
-function closestColor(rgb,palette) {
-  const lab=rgb2lab(rgb); let best=null,bestD=Infinity;
-  for (const c of palette) { const d=dE(lab,c.lab); if(d<bestD){bestD=d;best=c;} }
-  return {...best,delta:bestD};
-}
+  rl=rl>.04045?((rl+.055)/1.055)**2.4:rl/12.92;gl=gl>.04045?((gl+.055)/1.055)**2.4:gl/12.92;bl=bl>.04045?((bl+.055)/1.055)**2.4:bl/12.92;
+  let x=(rl*.4124564+gl*.3575761+bl*.1804375)/.95047,y=rl*.2126729+gl*.7151522+bl*.0721750,z=(rl*.0193339+gl*.1191920+bl*.9503041)/1.08883;
+  const f=v=>v>.008856?Math.cbrt(v):7.787*v+16/116;return[116*f(y)-16,500*(f(x)-f(y)),200*(f(y)-f(z))]}
+function dE(a,b){return Math.sqrt((a[0]-b[0])**2+(a[1]-b[1])**2+(a[2]-b[2])**2)}
+function closestColor(rgb,palette){const lab=rgb2lab(rgb);let best=null,bestD=Infinity;for(const c of palette){const d=dE(lab,c.lab);if(d<bestD){bestD=d;best=c}}return{...best,delta:bestD}}
 
-// ═══ GENERATE ═══
-function generatePattern() {
-  if(!sourceImg||!selectedColors.size) return;
-  const all=allColors();
-  const palette=all.filter(c=>selectedColors.has(c.hex)).map(c=>({
-    ...c, code:isIntlBrand()?c.code:isKakaBrand()?c.code:(c[currentBrand]||c.MARD),
-    rgb:hexRgb(c.hex), lab:rgb2lab(hexRgb(c.hex))
-  }));
-  const {w,h}=selectedSize;
-  const tmp=document.createElement('canvas');
-  if (extractMode==='block') {
-    const bs=4; tmp.width=w*bs; tmp.height=h*bs;
-    const tctx=tmp.getContext('2d'); tctx.drawImage(sourceImg,0,0,tmp.width,tmp.height);
-    const hi=tctx.getImageData(0,0,tmp.width,tmp.height).data;
-    beadResult=[];
+/* ═══ GENERATE ═══ */
+function generatePattern(){
+  if(!sourceImg||!selectedColors.size)return;
+  const all=allColors(),palette=all.filter(c=>selectedColors.has(c.hex)).map(c=>({
+    ...c,code:isIntl()?c.code:isKaka()?c.code:(c[currentBrand]||c.MARD),rgb:hexRgb(c.hex),lab:rgb2lab(hexRgb(c.hex))}));
+  const{w,h}=selectedSize,tmp=document.createElement('canvas');
+  if(extractMode==='block'){
+    const bs=4;tmp.width=w*bs;tmp.height=h*bs;const tc=tmp.getContext('2d');tc.drawImage(sourceImg,0,0,tmp.width,tmp.height);
+    const hi=tc.getImageData(0,0,tmp.width,tmp.height).data;beadResult=[];
     for(let y2=0;y2<h;y2++){const row=[];for(let x2=0;x2<w;x2++){
       let rr=0,gg=0,bb=0,aa=0,cnt=0;
-      for(let by=0;by<bs;by++) for(let bx=0;bx<bs;bx++){const px=(y2*bs+by)*tmp.width+(x2*bs+bx),i=px*4;rr+=hi[i];gg+=hi[i+1];bb+=hi[i+2];aa+=hi[i+3];cnt++;}
-      if(aa/cnt<128&&!fillBg){row.push(null);continue;}
+      for(let by=0;by<bs;by++)for(let bx=0;bx<bs;bx++){const px=(y2*bs+by)*tmp.width+(x2*bs+bx),i=px*4;rr+=hi[i];gg+=hi[i+1];bb+=hi[i+2];aa+=hi[i+3];cnt++}
+      if(aa/cnt<128&&!fillBg){row.push(null);continue}
       row.push(closestColor([Math.round(rr/cnt),Math.round(gg/cnt),Math.round(bb/cnt)],palette));
-    }beadResult.push(row);}
-  } else {
-    tmp.width=w;tmp.height=h;const tctx=tmp.getContext('2d');tctx.drawImage(sourceImg,0,0,w,h);
-    const data=tctx.getImageData(0,0,w,h).data;beadResult=[];
+    }beadResult.push(row)}
+  }else{
+    tmp.width=w;tmp.height=h;const tc=tmp.getContext('2d');tc.drawImage(sourceImg,0,0,w,h);
+    const data=tc.getImageData(0,0,w,h).data;beadResult=[];
     for(let y2=0;y2<h;y2++){const row=[];for(let x2=0;x2<w;x2++){const i=(y2*w+x2)*4;
-      if(data[i+3]<128&&!fillBg){row.push(null);continue;}
-      row.push(closestColor([data[i],data[i+1],data[i+2]],palette));
-    }beadResult.push(row);}
+      if(data[i+3]<128&&!fillBg){row.push(null);continue}
+      row.push(closestColor([data[i],data[i+1],data[i+2]],palette))}beadResult.push(row)}
   }
-  if(fillBg){const counts={};for(const row of beadResult) for(const b of row) if(b) counts[b.hex]=(counts[b.hex]||0)+1;
-    let bgHex=null,maxC=0;for(const[hex,c] of Object.entries(counts)) if(c>maxC){maxC=c;bgHex=hex;}
-    if(bgHex){const bgB=palette.find(c=>c.hex===bgHex);if(bgB) for(let y2=0;y2<beadResult.length;y2++) for(let x2=0;x2<beadResult[0].length;x2++) if(!beadResult[y2][x2]) beadResult[y2][x2]={...bgB};}
-  }
-  nav('result');
+  if(fillBg){const counts={};for(const row of beadResult)for(const b of row)if(b)counts[b.hex]=(counts[b.hex]||0)+1;
+    let bgH=null,mx=0;for(const[hex,c]of Object.entries(counts))if(c>mx){mx=c;bgH=hex}
+    if(bgH){const bg=palette.find(c=>c.hex===bgH);if(bg)for(let y2=0;y2<beadResult.length;y2++)for(let x2=0;x2<beadResult[0].length;x2++)if(!beadResult[y2][x2])beadResult[y2][x2]={...bg}}}
+  nav('result')
 }
 
-// ═══ RESULT ═══
-function renderResult() {
-  if(!beadResult) return;
-  const canvas=document.getElementById('beadCanvas'),ctx=canvas.getContext('2d');
-  const h=beadResult.length,w=beadResult[0].length;
-  const wrap=document.getElementById('resultCanvasWrap');
-  const maxW=wrap.clientWidth-32;
-  const s=Math.max(4,Math.floor(Math.min(maxW/w,14)));
-  canvas.width=w*s;canvas.height=h*s;
-  ctx.fillStyle='#f0e8ff';ctx.fillRect(0,0,canvas.width,canvas.height);
-  for(let y2=0;y2<h;y2++) for(let x2=0;x2<w;x2++){
+/* ═══ RESULT ═══ */
+function renderResult(){
+  if(!beadResult)return;const cv=document.getElementById('beadCanvas'),ctx=cv.getContext('2d');
+  const h=beadResult.length,w=beadResult[0].length,wrap=document.getElementById('resultCanvasWrap');
+  const maxW=wrap.clientWidth-40,s=Math.max(4,Math.floor(Math.min(maxW/w,14)));
+  cv.width=w*s;cv.height=h*s;ctx.fillStyle='#f0eaf8';ctx.fillRect(0,0,cv.width,cv.height);
+  for(let y2=0;y2<h;y2++)for(let x2=0;x2<w;x2++){
     const b=beadResult[y2][x2],px=x2*s,py=y2*s;
     if(viewMode==='round'){ctx.fillStyle='#d4c4f0';ctx.beginPath();ctx.arc(px+s/2,py+s/2,s*.1,0,Math.PI*2);ctx.fill();
-      if(b){ctx.fillStyle=b.hex;ctx.beginPath();ctx.arc(px+s/2,py+s/2,s*.42,0,Math.PI*2);ctx.fill();ctx.fillStyle='rgba(255,255,255,.18)';ctx.beginPath();ctx.arc(px+s/2-s*.1,py+s/2-s*.1,s*.12,0,Math.PI*2);ctx.fill();}}
-    else if(viewMode==='pixel'){if(b){ctx.fillStyle=b.hex;ctx.fillRect(px,py,s,s);}}
-    else{if(b){ctx.fillStyle=b.hex;ctx.fillRect(px+.5,py+.5,s-1,s-1);}}
+      if(b){ctx.fillStyle=b.hex;ctx.beginPath();ctx.arc(px+s/2,py+s/2,s*.42,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='rgba(255,255,255,.2)';ctx.beginPath();ctx.arc(px+s/2-s*.1,py+s/2-s*.1,s*.12,0,Math.PI*2);ctx.fill()}}
+    else if(viewMode==='pixel'){if(b){ctx.fillStyle=b.hex;ctx.fillRect(px,py,s,s)}}
+    else{if(b){ctx.fillStyle=b.hex;ctx.fillRect(px+.5,py+.5,s-1,s-1)}}
   }
-  if(viewMode==='grid'){ctx.strokeStyle='rgba(100,60,200,.12)';ctx.lineWidth=.5;
-    for(let x2=0;x2<=w;x2++){ctx.beginPath();ctx.moveTo(x2*s,0);ctx.lineTo(x2*s,canvas.height);ctx.stroke();}
-    for(let y2=0;y2<=h;y2++){ctx.beginPath();ctx.moveTo(0,y2*s);ctx.lineTo(canvas.width,y2*s);ctx.stroke();}
-  }
+  if(viewMode==='grid'){ctx.strokeStyle='rgba(100,60,200,.1)';ctx.lineWidth=.5;
+    for(let x2=0;x2<=w;x2++){ctx.beginPath();ctx.moveTo(x2*s,0);ctx.lineTo(x2*s,cv.height);ctx.stroke()}
+    for(let y2=0;y2<=h;y2++){ctx.beginPath();ctx.moveTo(0,y2*s);ctx.lineTo(cv.width,y2*s);ctx.stroke()}}
 }
-function setView(m,el){viewMode=m;document.querySelectorAll('.tool-btn[data-view]').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderResult();}
-function toggleStats(){const sp=document.getElementById('statsPanel'),cw=document.getElementById('resultCanvasWrap');if(sp.style.display==='none'){sp.style.display='block';cw.style.display='none';}else{sp.style.display='none';cw.style.display='flex';}}
-function buildStats(){if(!beadResult) return;const counts={};let total=0;for(const row of beadResult) for(const b of row){if(!b) continue;if(!counts[b.hex]) counts[b.hex]={...b,count:0};counts[b.hex].count++;total++;}
+function setView(m,el){viewMode=m;document.querySelectorAll('.r-btn[data-view]').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderResult()}
+function toggleStats(){const sp=document.getElementById('statsPanel'),cw=document.getElementById('resultCanvasWrap');
+  if(sp.style.display==='none'){sp.style.display='block';cw.style.display='none'}else{sp.style.display='none';cw.style.display='flex'}}
+function buildStats(){if(!beadResult)return;const counts={};let total=0;
+  for(const row of beadResult)for(const b of row){if(!b)continue;if(!counts[b.hex])counts[b.hex]={...b,count:0};counts[b.hex].count++;total++}
   const sorted=Object.values(counts).sort((a,b)=>b.count-a.count);
-  let html=`<div style="font-size:.68rem;font-weight:600;color:rgba(255,255,255,.7);padding:12px 0 8px">${brandDisplayName(currentBrand)} · 颜色用量</div>`;
-  html+=sorted.map(c=>`<div class="stat-row"><div class="stat-swatch" style="background:${c.hex}"></div><div class="stat-info"><div class="stat-name">${c.code}</div><div class="stat-code">${c.hex}</div></div><div class="stat-num">${c.count}</div></div>`).join('');
-  html+=`<div class="stat-total"><span>合计</span><span>${total} 颗</span></div>`;
-  html+=`<div style="font-size:.58rem;color:rgba(255,255,255,.35)">${sorted.length} 种颜色 · ${selectedSize.w}×${selectedSize.h}</div>`;
-  document.getElementById('statsPanel').innerHTML=html;}
-function exportCanvas(id){const c=document.getElementById(id),a=document.createElement('a');a.download='拼豆图纸.png';a.href=c.toDataURL('image/png');a.click();pixelToast('图纸已保存');}
+  let html=`<div class="st-head">${bdn(currentBrand)} · 颜色用量</div>`;
+  html+=sorted.map(c=>`<div class="st-row"><div class="st-sw" style="background:${c.hex}"></div><div class="st-info"><div class="st-name">${c.code}</div><div class="st-code">${c.hex}</div></div><div class="st-n">${c.count}</div></div>`).join('');
+  html+=`<div class="st-total"><span>合计</span><span>${total} 颗</span></div>`;
+  html+=`<div style="font-size:.6rem;color:rgba(255,255,255,.3)">${sorted.length} 种颜色 · ${selectedSize.w}×${selectedSize.h}</div>`;
+  document.getElementById('statsPanel').innerHTML=html}
+function exportCanvas(id){const c=document.getElementById(id),a=document.createElement('a');a.download='拼豆图纸.png';a.href=c.toDataURL('image/png');a.click();toast('图纸已保存')}
 
-// ═══ DRAW ═══
+/* ═══ DRAW ═══ */
 function initDraw(){
   drawN=parseInt(document.getElementById('drawSizeSelect').value);
   drawGrid=Array.from({length:drawN},()=>Array(drawN).fill(null));
   const picks=[];const groups=['F','A','B','C','D','E','G','H'];
-  for(const g of groups){if(COLOR_DB[g]) picks.push(...COLOR_DB[g].slice(0,3));if(picks.length>=24) break;}
-  document.getElementById('drawPalette').innerHTML=`<div class="draw-eraser ${drawErasing?'active':''}" onclick="setEraser()">✕</div>`+
-    picks.map(c=>`<div class="draw-swatch ${!drawErasing&&drawColor===c.hex?'active':''}" style="background:${c.hex}" onclick="setDrawCol('${c.hex}')"></div>`).join('');
-  if(!drawColor&&picks.length) drawColor=picks[0].hex;
-  renderDraw();
+  for(const g of groups){if(COLOR_DB[g])picks.push(...COLOR_DB[g].slice(0,3));if(picks.length>=24)break}
+  document.getElementById('drawPalette').innerHTML=`<div class="d-eraser ${drawErasing?'on':''}" onclick="setEraser()">✕</div>`+
+    picks.map(c=>`<div class="d-sw ${!drawErasing&&drawColor===c.hex?'on':''}" style="background:${c.hex}" onclick="setDrawCol('${c.hex}')"></div>`).join('');
+  if(!drawColor&&picks.length)drawColor=picks[0].hex;renderDraw();
   const cv=document.getElementById('drawCanvas');let drawing=false;
-  const cell=e=>{const r=cv.getBoundingClientRect();const cx=e.touches?e.touches[0].clientX:e.clientX;const cy=e.touches?e.touches[0].clientY:e.clientY;const s=cv.width/drawN;return{x:Math.max(0,Math.min(drawN-1,Math.floor((cx-r.left)*(cv.width/r.width)/s))),y:Math.max(0,Math.min(drawN-1,Math.floor((cy-r.top)*(cv.height/r.height)/s)))};};
-  const paint=e=>{const{x,y}=cell(e);drawGrid[y][x]=drawErasing?null:drawColor;renderDraw();};
-  cv.onmousedown=cv.ontouchstart=e=>{e.preventDefault();drawing=true;paint(e);};
-  cv.onmousemove=cv.ontouchmove=e=>{if(drawing){e.preventDefault();paint(e);}};
-  cv.onmouseup=cv.ontouchend=()=>drawing=false;cv.onmouseleave=()=>drawing=false;
+  const cell=e=>{const r=cv.getBoundingClientRect();const cx=e.touches?e.touches[0].clientX:e.clientX;const cy=e.touches?e.touches[0].clientY:e.clientY;
+    const s=cv.width/drawN;return{x:Math.max(0,Math.min(drawN-1,Math.floor((cx-r.left)*(cv.width/r.width)/s))),y:Math.max(0,Math.min(drawN-1,Math.floor((cy-r.top)*(cv.height/r.height)/s)))}};
+  const paint=e=>{const{x,y}=cell(e);drawGrid[y][x]=drawErasing?null:drawColor;renderDraw()};
+  cv.onmousedown=cv.ontouchstart=e=>{e.preventDefault();drawing=true;paint(e)};
+  cv.onmousemove=cv.ontouchmove=e=>{if(drawing){e.preventDefault();paint(e)}};
+  cv.onmouseup=cv.ontouchend=()=>drawing=false;cv.onmouseleave=()=>drawing=false
 }
-function setDrawCol(hex){drawColor=hex;drawErasing=false;refreshDrawTB();}
-function setEraser(){drawErasing=true;refreshDrawTB();}
-function refreshDrawTB(){document.querySelectorAll('.draw-swatch').forEach(el=>{el.classList.toggle('active',!drawErasing&&el.style.background&&rgbMatch(el.style.background,drawColor));});document.querySelector('.draw-eraser')?.classList.toggle('active',drawErasing);}
+function setDrawCol(hex){drawColor=hex;drawErasing=false;refreshDPal()}
+function setEraser(){drawErasing=true;refreshDPal()}
+function refreshDPal(){document.querySelectorAll('.d-sw').forEach(el=>{el.classList.toggle('on',!drawErasing&&el.style.background&&rgbMatch(el.style.background,drawColor))});document.querySelector('.d-eraser')?.classList.toggle('on',drawErasing)}
 function renderDraw(){
-  const cv=document.getElementById('drawCanvas'),ctx=cv.getContext('2d'),wrap=cv.parentElement,maxW=wrap.clientWidth-32;
+  const cv=document.getElementById('drawCanvas'),ctx=cv.getContext('2d'),wrap=cv.parentElement,maxW=wrap.clientWidth-40;
   const s=Math.max(6,Math.floor(maxW/drawN));cv.width=drawN*s;cv.height=drawN*s;
-  ctx.fillStyle='#f0e8ff';ctx.fillRect(0,0,cv.width,cv.height);
-  for(let y2=0;y2<drawN;y2++) for(let x2=0;x2<drawN;x2++){const px=x2*s,py=y2*s;
+  ctx.fillStyle='#f0eaf8';ctx.fillRect(0,0,cv.width,cv.height);
+  for(let y2=0;y2<drawN;y2++)for(let x2=0;x2<drawN;x2++){const px=x2*s,py=y2*s;
     ctx.fillStyle='#d4c4f0';ctx.beginPath();ctx.arc(px+s/2,py+s/2,s*.1,0,Math.PI*2);ctx.fill();
-    if(drawGrid[y2][x2]){ctx.fillStyle=drawGrid[y2][x2];ctx.beginPath();ctx.arc(px+s/2,py+s/2,s*.42,0,Math.PI*2);ctx.fill();ctx.fillStyle='rgba(255,255,255,.18)';ctx.beginPath();ctx.arc(px+s/2-s*.1,py+s/2-s*.1,s*.12,0,Math.PI*2);ctx.fill();}
-  }
-  ctx.strokeStyle='rgba(100,60,200,.08)';ctx.lineWidth=.5;
-  for(let i=0;i<=drawN;i++){ctx.beginPath();ctx.moveTo(i*s,0);ctx.lineTo(i*s,cv.height);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*s);ctx.lineTo(cv.width,i*s);ctx.stroke();}
+    if(drawGrid[y2][x2]){ctx.fillStyle=drawGrid[y2][x2];ctx.beginPath();ctx.arc(px+s/2,py+s/2,s*.42,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,.2)';ctx.beginPath();ctx.arc(px+s/2-s*.1,py+s/2-s*.1,s*.12,0,Math.PI*2);ctx.fill()}}
+  ctx.strokeStyle='rgba(100,60,200,.06)';ctx.lineWidth=.5;
+  for(let i=0;i<=drawN;i++){ctx.beginPath();ctx.moveTo(i*s,0);ctx.lineTo(i*s,cv.height);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*s);ctx.lineTo(cv.width,i*s);ctx.stroke()}
 }
-function clearDraw(){drawGrid=Array.from({length:drawN},()=>Array(drawN).fill(null));renderDraw();pixelToast('已清空画布');}
+function clearDraw(){drawGrid=Array.from({length:drawN},()=>Array(drawN).fill(null));renderDraw();toast('已清空')}
 
-// ═══ IDENTIFY ═══
+/* ═══ IDENTIFY ═══ */
 let idImg=null;
-document.getElementById('idFileInput').addEventListener('change',e=>{if(e.target.files[0]) loadIdImg(e.target.files[0]);});
-function loadIdImg(file){const reader=new FileReader();reader.onload=e=>{const img=new Image();img.onload=()=>{idImg=img;const cv=document.getElementById('idCanvas');cv.style.display='block';const maxW=cv.parentElement.clientWidth-32;const sc=Math.min(maxW/img.width,1);cv.width=img.width*sc;cv.height=img.height*sc;cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);document.getElementById('idUploadZone').style.display='none';pixelToast('点击图片取色');};img.src=e.target.result;};reader.readAsDataURL(file);}
+document.getElementById('idFileInput').addEventListener('change',e=>{if(e.target.files[0])loadIdImg(e.target.files[0])});
+function loadIdImg(file){const r=new FileReader();r.onload=e=>{const img=new Image();img.onload=()=>{idImg=img;
+  const cv=document.getElementById('idCanvas');cv.style.display='block';
+  const maxW=cv.parentElement.clientWidth-40,sc=Math.min(maxW/img.width,1);
+  cv.width=img.width*sc;cv.height=img.height*sc;cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+  document.getElementById('idUploadZone').style.display='none';toast('点击图片取色')};img.src=e.target.result};r.readAsDataURL(file)}
 
 document.getElementById('idCanvas').addEventListener('click',e=>{
   const cv=document.getElementById('idCanvas'),ctx=cv.getContext('2d'),r=cv.getBoundingClientRect();
@@ -1013,20 +750,19 @@ document.getElementById('idCanvas').addEventListener('click',e=>{
   const px=ctx.getImageData(x,y,1,1).data,rgb=[px[0],px[1],px[2]];
   const hex='#'+rgb.map(v=>v.toString(16).padStart(2,'0')).join(''),lab=rgb2lab(rgb);
   const matches=[];
-  for(const[g,colors] of Object.entries(COLOR_DB)) for(const c of colors){const d=dE(lab,rgb2lab(hexRgb(c.hex)));for(const brand of CN_BRANDS){if(brand==='卡卡') continue;if(c[brand]) matches.push({hex:c.hex,code:c[brand],brand,delta:d});}}
-  for(const[g,colors] of Object.entries(KAKA_DB)) for(const c of colors) matches.push({hex:c.hex,code:c.code,brand:'卡卡',delta:dE(lab,rgb2lab(hexRgb(c.hex)))});
-  for(const[brand,colors] of Object.entries(INTL_BRANDS)) for(const c of colors) matches.push({hex:c.hex,code:c.code,brand:brandDisplayName(brand),delta:dE(lab,rgb2lab(hexRgb(c.hex)))});
+  for(const[g,colors]of Object.entries(COLOR_DB))for(const c of colors){const d=dE(lab,rgb2lab(hexRgb(c.hex)));for(const brand of CN_BRANDS){if(brand==='卡卡')continue;if(c[brand])matches.push({hex:c.hex,code:c[brand],brand,delta:d})}}
+  for(const[g,colors]of Object.entries(KAKA_DB))for(const c of colors)matches.push({hex:c.hex,code:c.code,brand:'卡卡',delta:dE(lab,rgb2lab(hexRgb(c.hex)))});
+  for(const[brand,colors]of Object.entries(INTL_BRANDS))for(const c of colors)matches.push({hex:c.hex,code:c.code,brand:bdn(brand),delta:dE(lab,rgb2lab(hexRgb(c.hex)))});
   matches.sort((a,b)=>a.delta-b.delta);
-  const seen=new Set(),top=[];for(const m of matches){if(!seen.has(m.brand)){seen.add(m.brand);top.push(m);}if(top.length>=9) break;}
+  const seen=new Set(),top=[];for(const m of matches){if(!seen.has(m.brand)){seen.add(m.brand);top.push(m)}if(top.length>=9)break}
   document.getElementById('idResult').innerHTML=`
-    <div class="id-picked"><div class="id-swatch" style="background:${hex}"></div><div class="id-info"><div class="id-hex">${hex.toUpperCase()}</div><div class="id-rgb">RGB(${rgb.join(', ')})</div></div></div>
-    <div class="match-list-title">▸ 各品牌最近匹配</div>
-    <div class="match-wrap">${top.map(m=>`<div class="match-row"><div class="match-swatch" style="background:${m.hex}"></div><div class="match-info"><div class="match-name">${m.code}</div><div class="match-brand">${m.brand}</div></div><div class="match-delta">ΔE ${m.delta.toFixed(1)}</div></div>`).join('')}</div>`;
+    <div class="id-picked"><div class="id-sw" style="background:${hex}"></div><div><div class="id-hex">${hex.toUpperCase()}</div><div class="id-rgb">RGB(${rgb.join(', ')})</div></div></div>
+    <div class="m-title">各品牌最近匹配</div>
+    <div class="m-wrap">${top.map(m=>`<div class="m-row"><div class="m-sw" style="background:${m.hex}"></div><div class="m-info"><div class="m-name">${m.code}</div><div class="m-brand">${m.brand}</div></div><div class="m-de">ΔE ${m.delta.toFixed(1)}</div></div>`).join('')}</div>`
 });
 
-// ═══ INIT ═══
-selectedColors = new Set(allColors().map(c=>c.hex));
-updatePhotoUI();
+/* ═══ INIT ═══ */
+selectedColors=new Set(allColors().map(c=>c.hex));updatePhotoUI();
 </script>
 </body>
 </html>
