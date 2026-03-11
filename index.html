@@ -772,86 +772,63 @@ function genArt(){
 }
 
 /* === 3D 等距体素预览 === */
-let art3dAngleX=30,art3dAngleZ=35,artDepthMap=null,artDepthW=0,artDepthH=0,art3dScale=1,art3dDragging=false,art3dLastX=0,art3dLastY=0,art3dPinchDist=0;
+let art3dRX=0,art3dRY=0,art3dScale=1,art3dDragging=false,art3dLastX=0,art3dLastY=0,art3dPinchDist=0;
 function init3dPreview(){
   if(!artLayerData)return;
+  art3dRX=0;art3dRY=0;art3dScale=1;
   render3dVoxels();
-  /* 拖动事件 */
   const wrap=document.getElementById('art3dWrap');
   wrap.onmousedown=e=>{art3dDragging=true;art3dLastX=e.clientX;art3dLastY=e.clientY};
-  wrap.onmousemove=e=>{if(!art3dDragging)return;art3dAngleZ+=(e.clientX-art3dLastX)*.4;art3dAngleX-=(e.clientY-art3dLastY)*.3;art3dAngleX=Math.max(15,Math.min(75,art3dAngleX));art3dLastX=e.clientX;art3dLastY=e.clientY;render3dVoxels()};
+  wrap.onmousemove=e=>{if(!art3dDragging)return;art3dRY+=(e.clientX-art3dLastX)*.3;art3dRX+=(e.clientY-art3dLastY)*.3;art3dRY=Math.max(-60,Math.min(60,art3dRY));art3dRX=Math.max(-60,Math.min(60,art3dRX));art3dLastX=e.clientX;art3dLastY=e.clientY;render3dVoxels()};
   wrap.onmouseup=wrap.onmouseleave=()=>art3dDragging=false;
   wrap.ontouchstart=e=>{if(e.touches.length===2){art3dPinchDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);return}art3dDragging=true;art3dLastX=e.touches[0].clientX;art3dLastY=e.touches[0].clientY};
-  wrap.ontouchmove=e=>{e.preventDefault();if(e.touches.length===2){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);if(art3dPinchDist){art3dScale*=d/art3dPinchDist;art3dScale=Math.max(.4,Math.min(3,art3dScale))}art3dPinchDist=d;render3dVoxels();return}if(!art3dDragging)return;art3dAngleZ+=(e.touches[0].clientX-art3dLastX)*.4;art3dAngleX-=(e.touches[0].clientY-art3dLastY)*.3;art3dAngleX=Math.max(15,Math.min(75,art3dAngleX));art3dLastX=e.touches[0].clientX;art3dLastY=e.touches[0].clientY;render3dVoxels()};
+  wrap.ontouchmove=e=>{e.preventDefault();if(e.touches.length===2){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);if(art3dPinchDist){art3dScale*=d/art3dPinchDist;art3dScale=Math.max(.4,Math.min(3,art3dScale))}art3dPinchDist=d;render3dVoxels();return}if(!art3dDragging)return;art3dRY+=(e.touches[0].clientX-art3dLastX)*.3;art3dRX+=(e.touches[0].clientY-art3dLastY)*.3;art3dRY=Math.max(-60,Math.min(60,art3dRY));art3dRX=Math.max(-60,Math.min(60,art3dRX));art3dLastX=e.touches[0].clientX;art3dLastY=e.touches[0].clientY;render3dVoxels()};
   wrap.ontouchend=()=>{art3dDragging=false;art3dPinchDist=0};
 }
 function darken(hex,f){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgb(${Math.round(r*f)},${Math.round(g*f)},${Math.round(b*f)})`}
 function render3dVoxels(){
-  if(!artLayerData||!artDepthMap)return;
-  const rows=artDepthH,cols=artDepthW;
-  /* 连续高度图: 深度值→高度(1~8块) */
+  if(!artLayerData)return;
+  const rows=artLayerData[0].length,cols=artLayerData[0][0].length;
   const hMap=[];
-  let dMin=Infinity,dMax=-Infinity;
-  for(let i=0;i<rows*cols;i++){if(artDepthMap[i]<dMin)dMin=artDepthMap[i];if(artDepthMap[i]>dMax)dMax=artDepthMap[i]}
-  const dRange=dMax-dMin||1;
-  const maxBlocks=6;/* 最高6块 */
   for(let y=0;y<rows;y++){const row=[];for(let x=0;x<cols;x++){
-    const d=(artDepthMap[y*cols+x]-dMin)/dRange;
-    row.push(1+Math.round(d*(maxBlocks-1)));/* 1~6 */
+    let h=0;for(let l=0;l<artLayers;l++){if(artLayerData[l][y][x])h=l+1}
+    row.push(h);
   }hMap.push(row)}
-  /* 等距参数 */
+  const ry=art3dRY*Math.PI/180,rx=art3dRX*Math.PI/180;
+  const cy=Math.cos(ry),sy=Math.sin(ry),cx=Math.cos(rx),sx=Math.sin(rx);
+  function proj(gx,gy,gz){let x1=gx*cy+gz*sy,z1=-gx*sy+gz*cy;let y1=gy*cx-z1*sx,z2=gy*sx+z1*cx;return{px:x1,py:y1,pz:z2}}
   const wrapEl=document.getElementById('art3dWrap');
-  const maxPx=Math.min(wrapEl.clientWidth-16,350);
-  const tw=Math.max(3,Math.floor(maxPx/(cols+rows)*2))*art3dScale;/* tile宽 */
-  const th=tw*0.5;/* tile高(等距) */
-  const lh=tw*0.4;/* 每层方块高度 */
-  /* 画布大小 */
-  const cv=document.getElementById('art3dCv');
-  const ctx=cv.getContext('2d');
+  const maxPx=Math.min(wrapEl.clientWidth-16,wrapEl.clientHeight-50);
+  const s=Math.max(2,Math.floor(maxPx/Math.max(rows,cols)))*art3dScale;
+  const ld=s*0.6;
+  const cv=document.getElementById('art3dCv'),ctx=cv.getContext('2d');
   const cw=wrapEl.clientWidth,ch=wrapEl.clientHeight-20;
   cv.width=cw;cv.height=ch;
   ctx.fillStyle='#4a8b42';ctx.fillRect(0,0,cw,ch);
-  /* 标准等距投影: x_screen=(gx-gy)*tw/2, y_screen=(gx+gy)*th/2-gz*lh */
-  const az=art3dAngleZ*Math.PI/180;
-  const ox=cw/2,oy=ch*0.65;
-  function isoX(gx,gy){const rx=gx*Math.cos(az)-gy*Math.sin(az);const ry=gx*Math.sin(az)+gy*Math.cos(az);return rx*tw/2-ry*tw/2}
-  function isoY(gx,gy,gz){const rx=gx*Math.cos(az)-gy*Math.sin(az);const ry=gx*Math.sin(az)+gy*Math.cos(az);return rx*th/2+ry*th/2-gz*lh}
-  /* painter排序: 从远到近 */
-  const pixels=[];
+  const ox=cw/2,oy=ch/2;
+  const items=[];
   for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
     const h=hMap[y][x];if(h<=0)continue;
-    let topColor=null;
-    for(let l=artLayers-1;l>=0;l--){if(artLayerData[l][y][x]){topColor=artLayerData[l][y][x].hex;break}}
-    if(!topColor){topColor=artLayerData[0][y][x]?artLayerData[0][y][x].hex:null}
-    if(!topColor)continue;
-    const depth=isoY(x-cols/2,y-rows/2,0);
-    pixels.push({x,y,h,hex:topColor,depth});
+    let hex=null;for(let l=h-1;l>=0;l--){if(artLayerData[l][y][x]){hex=artLayerData[l][y][x].hex;break}}
+    if(!hex)continue;
+    const cp=proj(x-cols/2+.5,y-rows/2+.5,h*ld/s/2);
+    items.push({x,y,h,hex,depth:cp.pz});
   }
-  pixels.sort((a,b)=>a.depth-b.depth);
-  /* 画方块 */
-  for(const p of pixels){
-    const gx=p.x-cols/2,gy=p.y-rows/2;
-    /* 顶面 */
-    const tx=ox+isoX(gx,gy),ty=oy+isoY(gx,gy,p.h);
-    const tx1=ox+isoX(gx+1,gy),ty1=oy+isoY(gx+1,gy,p.h);
-    const tx2=ox+isoX(gx+1,gy+1),ty2=oy+isoY(gx+1,gy+1,p.h);
-    const tx3=ox+isoX(gx,gy+1),ty3=oy+isoY(gx,gy+1,p.h);
-    /* 底面(地面高度0) */
-    const bx1=ox+isoX(gx+1,gy),by1=oy+isoY(gx+1,gy,0);
-    const bx2=ox+isoX(gx+1,gy+1),by2=oy+isoY(gx+1,gy+1,0);
-    const bx3=ox+isoX(gx,gy+1),by3=oy+isoY(gx,gy+1,0);
-    /* 右侧面 */
-    ctx.fillStyle=darken(p.hex,.75);
-    ctx.beginPath();ctx.moveTo(tx1,ty1);ctx.lineTo(tx2,ty2);ctx.lineTo(bx2,by2);ctx.lineTo(bx1,by1);ctx.closePath();ctx.fill();
-    /* 左侧面 */
-    ctx.fillStyle=darken(p.hex,.55);
-    ctx.beginPath();ctx.moveTo(tx2,ty2);ctx.lineTo(tx3,ty3);ctx.lineTo(bx3,by3);ctx.lineTo(bx2,by2);ctx.closePath();ctx.fill();
-    /* 顶面 */
-    ctx.fillStyle=p.hex;
-    ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(tx1,ty1);ctx.lineTo(tx2,ty2);ctx.lineTo(tx3,ty3);ctx.closePath();ctx.fill();
+  items.sort((a,b)=>a.depth-b.depth);
+  const nF=proj(0,0,1),nB=proj(0,0,-1),nR=proj(1,0,0),nL=proj(-1,0,0),nU=proj(0,-1,0),nD=proj(0,1,0);
+  for(const c of items){
+    const x0=(c.x-cols/2),y0=(c.y-rows/2),z0=0,z1=c.h*ld/s;
+    const v=[proj(x0,y0,z0),proj(x0+1,y0,z0),proj(x0+1,y0+1,z0),proj(x0,y0+1,z0),
+             proj(x0,y0,z1),proj(x0+1,y0,z1),proj(x0+1,y0+1,z1),proj(x0,y0+1,z1)]
+      .map(p=>({px:ox+p.px*s,py:oy+p.py*s}));
+    if(nF.pz>0){ctx.fillStyle=c.hex;ctx.beginPath();ctx.moveTo(v[4].px,v[4].py);ctx.lineTo(v[5].px,v[5].py);ctx.lineTo(v[6].px,v[6].py);ctx.lineTo(v[7].px,v[7].py);ctx.closePath();ctx.fill()}
+    if(nB.pz>0){ctx.fillStyle=darken(c.hex,.5);ctx.beginPath();ctx.moveTo(v[0].px,v[0].py);ctx.lineTo(v[3].px,v[3].py);ctx.lineTo(v[2].px,v[2].py);ctx.lineTo(v[1].px,v[1].py);ctx.closePath();ctx.fill()}
+    if(nR.pz>0){ctx.fillStyle=darken(c.hex,.75);ctx.beginPath();ctx.moveTo(v[1].px,v[1].py);ctx.lineTo(v[2].px,v[2].py);ctx.lineTo(v[6].px,v[6].py);ctx.lineTo(v[5].px,v[5].py);ctx.closePath();ctx.fill()}
+    if(nL.pz>0){ctx.fillStyle=darken(c.hex,.65);ctx.beginPath();ctx.moveTo(v[0].px,v[0].py);ctx.lineTo(v[4].px,v[4].py);ctx.lineTo(v[7].px,v[7].py);ctx.lineTo(v[3].px,v[3].py);ctx.closePath();ctx.fill()}
+    if(nU.pz>0){ctx.fillStyle=darken(c.hex,.85);ctx.beginPath();ctx.moveTo(v[0].px,v[0].py);ctx.lineTo(v[1].px,v[1].py);ctx.lineTo(v[5].px,v[5].py);ctx.lineTo(v[4].px,v[4].py);ctx.closePath();ctx.fill()}
+    if(nD.pz>0){ctx.fillStyle=darken(c.hex,.6);ctx.beginPath();ctx.moveTo(v[3].px,v[3].py);ctx.lineTo(v[7].px,v[7].py);ctx.lineTo(v[6].px,v[6].py);ctx.lineTo(v[2].px,v[2].py);ctx.closePath();ctx.fill()}
   }
 }
-
 function renArtTabs(){
   const tabs=document.getElementById('artTabs');
   let h=`<div class="art-tab ${artCurLayer===-1?'on':''}" onclick="setArtLayer(-1)">叠加预览</div>`;
