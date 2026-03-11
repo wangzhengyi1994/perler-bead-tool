@@ -745,37 +745,39 @@ function pickArtSize(w,h){artSize={w,h};setLayers(autoLayers());toast(w+'x'+h);c
 
 /* 深度分层算法 */
 function genDepthMap(imgData,w,h){
-  const depth=new Float32Array(w*h);
-  const cx=w/2,cy=h/2,maxDist=Math.sqrt(cx*cx+cy*cy);
-  /* 1. 中心距离: 画面中心=前景(高), 边缘=背景(低) */
-  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
-    const i=y*w+x;
-    const dist=Math.sqrt((x-cx)*(x-cx)+(y-cy)*(y-cy))/maxDist;
-    depth[i]=1-dist; /* 中心=1, 边缘=0 */
-  }
-  /* 2. 颜色对比度: 与周围颜色差异大的区域更可能是前景主体 */
-  const contrast=new Float32Array(w*h);
-  for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
-    const i=y*w+x,p=i*4;
-    let diff=0,cnt=0;
-    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
-      if(!dy&&!dx)continue;
-      const ni=((y+dy)*w+(x+dx))*4;
-      diff+=Math.abs(imgData[p]-imgData[ni])+Math.abs(imgData[p+1]-imgData[ni+1])+Math.abs(imgData[p+2]-imgData[ni+2]);
-      cnt++;
-    }
-    contrast[y*w+x]=diff/(cnt*255*3);
-  }
-  /* 3. 饱和度: 高饱和区域更可能是主体 */
-  const sat=new Float32Array(w*h);
+  /* 颜色显著性检测: 稀有颜色=前景(高depth), 常见颜色=背景(低depth) */
+  /* 1. 量化颜色到16级(减少计算量), 统计频率 */
+  const qBits=4,qDiv=256>>qBits;
+  const hist=new Map();
   for(let i=0;i<w*h;i++){
-    const r=imgData[i*4],g=imgData[i*4+1],b=imgData[i*4+2];
-    const mx=Math.max(r,g,b),mn=Math.min(r,g,b);
-    sat[i]=mx>0?(mx-mn)/mx:0;
+    const r=imgData[i*4]>>qBits,g=imgData[i*4+1]>>qBits,b=imgData[i*4+2]>>qBits;
+    const key=(r<<(qBits*2))|(g<<qBits)|b;
+    hist.set(key,(hist.get(key)||0)+1);
   }
-  /* 4. 混合: 中心距离50% + 对比度30% + 饱和度20% */
-  for(let i=0;i<w*h;i++)depth[i]=depth[i]*0.5+contrast[i]*0.3+sat[i]*0.2;
-  /* 5. 高斯模糊平滑(7x7, 更大核让层边界更自然) */
+  /* 2. 每个像素的显著性 = 1 - 该颜色的频率(归一化) */
+  const total=w*h;
+  const sal=new Float32Array(w*h);
+  for(let i=0;i<w*h;i++){
+    const r=imgData[i*4]>>qBits,g=imgData[i*4+1]>>qBits,b=imgData[i*4+2]>>qBits;
+    const key=(r<<(qBits*2))|(g<<qBits)|b;
+    sal[i]=1-hist.get(key)/total;
+  }
+  /* 3. 颜色距离加权: 与全图平均色差异越大越显著 */
+  let avgR=0,avgG=0,avgB=0;
+  for(let i=0;i<w*h;i++){avgR+=imgData[i*4];avgG+=imgData[i*4+1];avgB+=imgData[i*4+2]}
+  avgR/=total;avgG/=total;avgB/=total;
+  const cdist=new Float32Array(w*h);
+  let maxCD=0;
+  for(let i=0;i<w*h;i++){
+    const dr=imgData[i*4]-avgR,dg=imgData[i*4+1]-avgG,db=imgData[i*4+2]-avgB;
+    cdist[i]=Math.sqrt(dr*dr+dg*dg+db*db);
+    if(cdist[i]>maxCD)maxCD=cdist[i];
+  }
+  if(maxCD>0)for(let i=0;i<w*h;i++)cdist[i]/=maxCD;
+  /* 4. 混合: 颜色频率显著性60% + 颜色距离40% */
+  const depth=new Float32Array(w*h);
+  for(let i=0;i<w*h;i++)depth[i]=sal[i]*0.6+cdist[i]*0.4;
+  /* 5. 高斯模糊平滑(7x7) */
   const sm=new Float32Array(w*h);
   const k=[1,6,15,20,15,6,1];
   for(let y=0;y<h;y++)for(let x=0;x<w;x++){
