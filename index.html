@@ -789,74 +789,66 @@ function darken(hex,f){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(
 function render3dVoxels(){
   if(!artLayerData||!artDepthMap)return;
   const rows=artDepthH,cols=artDepthW;
-  /* 连续高度图: 直接用深度值(0~1) */
+  /* 连续高度图: 深度值→高度(1~8块) */
   const hMap=[];
   let dMin=Infinity,dMax=-Infinity;
   for(let i=0;i<rows*cols;i++){if(artDepthMap[i]<dMin)dMin=artDepthMap[i];if(artDepthMap[i]>dMax)dMax=artDepthMap[i]}
   const dRange=dMax-dMin||1;
+  const maxBlocks=6;/* 最高6块 */
   for(let y=0;y<rows;y++){const row=[];for(let x=0;x<cols;x++){
-    const d=(artDepthMap[y*cols+x]-dMin)/dRange;/* 归一化0~1 */
-    row.push(0.3+d*0.7);/* 最低0.3, 最高1.0 */
+    const d=(artDepthMap[y*cols+x]-dMin)/dRange;
+    row.push(1+Math.round(d*(maxBlocks-1)));/* 1~6 */
   }hMap.push(row)}
-  /* 等距投影参数 */
-  const az=art3dAngleZ*Math.PI/180,ax=art3dAngleX*Math.PI/180;
-  const cosZ=Math.cos(az),sinZ=Math.sin(az),sinX=Math.sin(ax),cosX=Math.cos(ax);
-  /* 体素大小 */
+  /* 等距参数 */
   const wrapEl=document.getElementById('art3dWrap');
-  const maxPx=Math.min(wrapEl.clientWidth-20,wrapEl.clientHeight-40);
-  const voxS=Math.max(2,Math.floor(maxPx/(Math.max(rows,cols)*1.8)))*art3dScale;
-  const maxH=Math.max(rows,cols)*voxS*0.4;/* 最大高度=画幅的40% */
-  /* 投影函数: 3D→2D */
-  function proj(gx,gy,gz){
-    const rx=gx*cosZ-gy*sinZ;const ry=gx*sinZ+gy*cosZ;
-    return{px:rx*voxS,py:(ry*cosX-gz*sinX)*voxS*0.5+gz*sinX*voxS*0.5}
-  }
-  /* 收集柱体(每个像素一根柱子, 从0到hMap高度) */
-  const columns=[];
-  for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
-    const h=hMap[y][x];if(h<=0)continue;
-    /* 取顶层颜色 */
-    let topColor=null;
-    for(let l=h-1;l>=0;l--){if(artLayerData[l][y][x]){topColor=artLayerData[l][y][x].hex;break}}
-    if(!topColor)continue;
-    /* 需要画的侧面高度: 跟邻居比 */
-    const nh=Math.max(
-      x>0?hMap[y][x-1]:0, x<cols-1?hMap[y][x+1]:0,
-      y>0?hMap[y-1][x]:0, y<rows-1?hMap[y+1][x]:0, 0);
-    columns.push({x,y,h,nh,hex:topColor});
-  }
-  /* 排序: painter算法(远到近) */
-  columns.sort((a,b)=>{
-    const da=(a.x-cols/2)*sinZ+(a.y-rows/2)*cosZ;
-    const db=(b.x-cols/2)*sinZ+(b.y-rows/2)*cosZ;
-    if(Math.abs(da-db)>0.01)return da-db;
-    return a.h-b.h;
-  });
-  /* Canvas */
+  const maxPx=Math.min(wrapEl.clientWidth-16,350);
+  const tw=Math.max(3,Math.floor(maxPx/(cols+rows)*2))*art3dScale;/* tile宽 */
+  const th=tw*0.5;/* tile高(等距) */
+  const lh=tw*0.4;/* 每层方块高度 */
+  /* 画布大小 */
   const cv=document.getElementById('art3dCv');
   const ctx=cv.getContext('2d');
-  const cw=wrapEl.clientWidth,ch=wrapEl.clientHeight-40;
+  const cw=wrapEl.clientWidth,ch=wrapEl.clientHeight-20;
   cv.width=cw;cv.height=ch;
   ctx.fillStyle='#4a8b42';ctx.fillRect(0,0,cw,ch);
-  const ox=cw/2,oy=ch*0.6;
-  /* 画柱体 */
-  for(const c of columns){
-    const gx=c.x-cols/2,gy=c.y-rows/2;
-    const gz0=0,gz1=c.h*maxH/voxS;
-    /* 顶面4点 */
-    const pt0=proj(gx,gy,gz1),pt1=proj(gx+1,gy,gz1),pt2=proj(gx+1,gy+1,gz1),pt3=proj(gx,gy+1,gz1);
-    /* 底面4点 */
-    const pb0=proj(gx,gy,gz0),pb1=proj(gx+1,gy,gz0),pb2=proj(gx+1,gy+1,gz0),pb3=proj(gx,gy+1,gz0);
-    /* 前面(底边, 根据视角决定哪些面可见) */
-    /* 画右侧面 */
-    ctx.fillStyle=darken(c.hex,.72);
-    ctx.beginPath();ctx.moveTo(ox+pt1.px,oy-pt1.py);ctx.lineTo(ox+pt2.px,oy-pt2.py);ctx.lineTo(ox+pb2.px,oy-pb2.py);ctx.lineTo(ox+pb1.px,oy-pb1.py);ctx.closePath();ctx.fill();
-    /* 画左侧面 */
-    ctx.fillStyle=darken(c.hex,.58);
-    ctx.beginPath();ctx.moveTo(ox+pt2.px,oy-pt2.py);ctx.lineTo(ox+pt3.px,oy-pt3.py);ctx.lineTo(ox+pb3.px,oy-pb3.py);ctx.lineTo(ox+pb2.px,oy-pb2.py);ctx.closePath();ctx.fill();
-    /* 画顶面 */
-    ctx.fillStyle=c.hex;
-    ctx.beginPath();ctx.moveTo(ox+pt0.px,oy-pt0.py);ctx.lineTo(ox+pt1.px,oy-pt1.py);ctx.lineTo(ox+pt2.px,oy-pt2.py);ctx.lineTo(ox+pt3.px,oy-pt3.py);ctx.closePath();ctx.fill();
+  /* 标准等距投影: x_screen=(gx-gy)*tw/2, y_screen=(gx+gy)*th/2-gz*lh */
+  const az=art3dAngleZ*Math.PI/180;
+  const ox=cw/2,oy=ch*0.65;
+  function isoX(gx,gy){const rx=gx*Math.cos(az)-gy*Math.sin(az);const ry=gx*Math.sin(az)+gy*Math.cos(az);return rx*tw/2-ry*tw/2}
+  function isoY(gx,gy,gz){const rx=gx*Math.cos(az)-gy*Math.sin(az);const ry=gx*Math.sin(az)+gy*Math.cos(az);return rx*th/2+ry*th/2-gz*lh}
+  /* painter排序: 从远到近 */
+  const pixels=[];
+  for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
+    const h=hMap[y][x];if(h<=0)continue;
+    let topColor=null;
+    for(let l=artLayers-1;l>=0;l--){if(artLayerData[l][y][x]){topColor=artLayerData[l][y][x].hex;break}}
+    if(!topColor){topColor=artLayerData[0][y][x]?artLayerData[0][y][x].hex:null}
+    if(!topColor)continue;
+    const depth=isoY(x-cols/2,y-rows/2,0);
+    pixels.push({x,y,h,hex:topColor,depth});
+  }
+  pixels.sort((a,b)=>a.depth-b.depth);
+  /* 画方块 */
+  for(const p of pixels){
+    const gx=p.x-cols/2,gy=p.y-rows/2;
+    /* 顶面 */
+    const tx=ox+isoX(gx,gy),ty=oy+isoY(gx,gy,p.h);
+    const tx1=ox+isoX(gx+1,gy),ty1=oy+isoY(gx+1,gy,p.h);
+    const tx2=ox+isoX(gx+1,gy+1),ty2=oy+isoY(gx+1,gy+1,p.h);
+    const tx3=ox+isoX(gx,gy+1),ty3=oy+isoY(gx,gy+1,p.h);
+    /* 底面(地面高度0) */
+    const bx1=ox+isoX(gx+1,gy),by1=oy+isoY(gx+1,gy,0);
+    const bx2=ox+isoX(gx+1,gy+1),by2=oy+isoY(gx+1,gy+1,0);
+    const bx3=ox+isoX(gx,gy+1),by3=oy+isoY(gx,gy+1,0);
+    /* 右侧面 */
+    ctx.fillStyle=darken(p.hex,.75);
+    ctx.beginPath();ctx.moveTo(tx1,ty1);ctx.lineTo(tx2,ty2);ctx.lineTo(bx2,by2);ctx.lineTo(bx1,by1);ctx.closePath();ctx.fill();
+    /* 左侧面 */
+    ctx.fillStyle=darken(p.hex,.55);
+    ctx.beginPath();ctx.moveTo(tx2,ty2);ctx.lineTo(tx3,ty3);ctx.lineTo(bx3,by3);ctx.lineTo(bx2,by2);ctx.closePath();ctx.fill();
+    /* 顶面 */
+    ctx.fillStyle=p.hex;
+    ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(tx1,ty1);ctx.lineTo(tx2,ty2);ctx.lineTo(tx3,ty3);ctx.closePath();ctx.fill();
   }
 }
 
