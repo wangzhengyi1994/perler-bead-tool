@@ -564,16 +564,15 @@ input[type=file]{display:none}
     <div class="pbtn" style="flex:1"><div class="pill-border"></div><button class="pbtn-inner bg-green" onclick="expCv('artCv')">SAVE</button></div></div></div>
 </div>
 
-<!-- Art Size Sheet -->
-<div class="sheet" id="sheetArtSize">
-  <div class="sheet-mask" onclick="closeSheet('artSize')"></div>
-  <div class="sheet-body"><div class="sheet-handle"></div>
-    <div class="sh-head"><span>画布尺寸</span><button class="sh-close" onclick="closeSheet('artSize')">×</button></div>
-    <div id="artSizeBody"></div></div>
-</div>
-
 <div class="toast" id="toast"></div>
 </div>
+
+<!-- Art Size Sheet (outside #app to avoid overflow:hidden clipping) -->
+<div class="sheet-mask" id="sheetArtSize" onclick="closeSheet('artSize')"><div class="sheet" onclick="event.stopPropagation()">
+  <div class="sheet-handle"></div>
+  <div class="sh-head"><span>画布尺寸</span><button class="sh-close" onclick="closeSheet('artSize')">×</button></div>
+  <div id="artSizeBody"></div>
+</div></div>
 
 <script src="all_brands.js"></script>
 <script>
