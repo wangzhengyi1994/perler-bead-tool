@@ -770,7 +770,7 @@ function genArt(){
 }
 
 /* === 3D 等距体素预览 === */
-let art3dAngleX=50,art3dAngleZ=35,art3dScale=1,art3dDragging=false,art3dLastX=0,art3dLastY=0,art3dPinchDist=0;
+let art3dAngleX=30,art3dAngleZ=35,art3dScale=1,art3dDragging=false,art3dLastX=0,art3dLastY=0,art3dPinchDist=0;
 function init3dPreview(){
   if(!artLayerData)return;
   render3dVoxels();
@@ -800,11 +800,11 @@ function render3dVoxels(){
   const wrapEl=document.getElementById('art3dWrap');
   const maxPx=Math.min(wrapEl.clientWidth-20,wrapEl.clientHeight-40);
   const voxS=Math.max(2,Math.floor(maxPx/(Math.max(rows,cols)*1.8)))*art3dScale;
-  const blockH=voxS*0.8;/* 每层方块高度 */
+  const blockH=voxS*2.5;/* 每层方块高度, 大值让高差明显 */
   /* 投影函数: 3D→2D */
   function proj(gx,gy,gz){
     const rx=gx*cosZ-gy*sinZ;const ry=gx*sinZ+gy*cosZ;
-    return{px:rx*voxS,py:(ry*cosX-gz*sinX)*voxS*0.5+gz*sinX*voxS*0.3}
+    return{px:rx*voxS,py:(ry*cosX-gz*sinX)*voxS*0.5+gz*sinX*voxS*0.5}
   }
   /* 收集柱体(每个像素一根柱子, 从0到hMap高度) */
   const columns=[];
