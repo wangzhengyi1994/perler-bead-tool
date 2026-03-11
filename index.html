@@ -31,6 +31,15 @@
 html{font-size:15px;-webkit-tap-highlight-color:transparent}
 body{font-family:var(--body);background:var(--bg);color:var(--text);min-height:100dvh;-webkit-font-smoothing:antialiased}
 .app{max-width:480px;margin:0 auto;min-height:100dvh;position:relative;overflow:hidden;background:var(--bg)}
+/* Cutout */
+.cut-tools{display:flex;gap:6px;padding:10px 16px;background:var(--white);border-bottom:var(--px) solid var(--black);flex-wrap:wrap}
+.cut-btn{font-family:var(--font);font-size:.38rem;padding:5px 12px;border-radius:16px;border:2px solid var(--black);background:var(--white);cursor:pointer}
+.cut-btn.on{background:var(--orange);color:var(--white)}
+.cut-btn:hover{filter:brightness(1.05)}
+.cut-slider-row{display:flex;align-items:center;gap:8px;padding:6px 16px;background:var(--white);font-family:var(--font);font-size:.38rem}
+.cut-label{color:var(--text2);min-width:28px}
+.cut-slider{flex:1;accent-color:var(--orange)}
+.cut-val{color:var(--text);min-width:24px;text-align:right}
 /* Art Gallery */
 .m-section{font-family:var(--font);font-size:.44rem;color:var(--text);padding:10px 16px 6px;letter-spacing:1px}
 .art-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 16px}
@@ -416,6 +425,8 @@ input[type=file]{display:none}
       <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
         <div class="upload-px">+</div><div class="upload-label">选择一张图片</div><div class="upload-hint">支持 JPG / PNG</div></div></div>
     <input type="file" id="fileInput" accept="image/*">
+    <div style="padding:0 16px 8px"><div class="pbtn" id="cutoutBtn" style="display:none"><div class="pill-border"></div>
+      <button class="pbtn-inner bg-pink" onclick="nav('cutout')">智能抠图</button></div></div>
     <div class="s-wrap"><div class="rect-border"></div><div class="s-card">
       <div class="s-row"><span class="s-label">拼豆品牌</span><div class="pkr" onclick="openSheet('brand')"><span id="valBrand">MARD</span> ▾</div></div>
       <div class="s-row"><span class="s-label">画布尺寸</span><div class="pkr" onclick="openSheet('size')"><span id="valSize">50x50</span> ▾</div></div>
@@ -470,6 +481,32 @@ input[type=file]{display:none}
   <div class="bbar"><div class="btn-row">
     <div class="pbtn" style="flex:1"><div class="pill-border"></div><button class="pbtn-inner bg-pink" onclick="clrDraw()">CLEAR</button></div>
     <div class="pbtn" style="flex:2"><div class="pill-border"></div><button class="pbtn-inner bg-green" onclick="expCv('drawCv')">SAVE</button></div></div></div>
+</div>
+
+<!-- CUTOUT: 智能抠图 -->
+<div class="page" id="pageCutout">
+  <div class="hd"><button class="hd-back" onclick="nav('photo')">BACK</button><span class="hd-title">智能抠图</span></div>
+  <div class="cut-tools">
+    <button class="cut-btn on" id="cutWand" onclick="setCutTool('wand')">魔术棒</button>
+    <button class="cut-btn" id="cutEraser" onclick="setCutTool('eraser')">橡皮擦</button>
+    <button class="cut-btn" id="cutRestore" onclick="setCutTool('restore')">恢复</button>
+    <button class="cut-btn" onclick="cutUndo()">撤销</button>
+    <button class="cut-btn" onclick="cutReset()">重置</button>
+  </div>
+  <div class="cut-slider-row">
+    <span class="cut-label">容差</span>
+    <input type="range" id="cutTolerance" min="5" max="80" value="32" class="cut-slider">
+    <span class="cut-val" id="cutTolVal">32</span>
+  </div>
+  <div class="cut-slider-row">
+    <span class="cut-label">笔刷</span>
+    <input type="range" id="cutBrushSize" min="3" max="30" value="10" class="cut-slider">
+    <span class="cut-val" id="cutBrushVal">10</span>
+  </div>
+  <div class="cv-wrap" id="cutWrap"><canvas id="cutCv"></canvas></div>
+  <div class="bbar"><div class="btn-row">
+    <div class="pbtn" style="flex:1"><div class="pill-border"></div><button class="pbtn-inner bg-blue" onclick="nav('photo')">取消</button></div>
+    <div class="pbtn" style="flex:2"><div class="pill-border"></div><button class="pbtn-inner bg-green" onclick="applyCutout()">应用抠图</button></div></div></div>
 </div>
 
 <!-- IDENTIFY -->
@@ -544,7 +581,7 @@ const SD=[{w:16,h:16,l:'16x16',t:'钥匙扣',b:256,tm:'30m'},{w:26,h:26,l:'26x26
 let cBrand='MARD',cSize={w:50,h:50},selC=new Set(),srcImg=null,bRes=null,vMode='grid';
 let dCol=null,dErase=false,dGrid=null,dN=29,fillBg=false,exMode='standard',navSt=['home'];
 
-function nav(id){const cur=navSt[navSt.length-1];if(cur===id)return;const ce=document.getElementById('page'+cap(cur)),ne=document.getElementById('page'+cap(id));if(!ne)return;const d={home:0,photo:1,draw:1,identify:1,master:1,colors:2,result:2,artResult:2},deeper=(d[id]||0)>(d[cur]||0);if(deeper)navSt.push(id);else{const i=navSt.indexOf(id);navSt=i>=0?navSt.slice(0,i+1):[...navSt,id]}ce.classList.remove('active','slide-in');ne.classList.remove('slide-out');if(deeper){ne.classList.add('active','slide-in');setTimeout(()=>{ce.classList.remove('active');ne.classList.remove('slide-in')},260)}else{ne.classList.add('active');ce.classList.add('slide-out');setTimeout(()=>{ce.classList.remove('active','slide-out')},220)}if(id==='photo')upUI();if(id==='colors')renCP();if(id==='draw')initDraw();if(id==='result'){renRes();bldSt()}if(id==='master')setTimeout(initArtPage,50);if(id==='artResult'){setTimeout(()=>{renArtTabs();renArtCv();bldArtSt()},50)}}
+function nav(id){const cur=navSt[navSt.length-1];if(cur===id)return;const ce=document.getElementById('page'+cap(cur)),ne=document.getElementById('page'+cap(id));if(!ne)return;const d={home:0,photo:1,draw:1,identify:1,master:1,cutout:2,colors:2,result:2,artResult:2},deeper=(d[id]||0)>(d[cur]||0);if(deeper)navSt.push(id);else{const i=navSt.indexOf(id);navSt=i>=0?navSt.slice(0,i+1):[...navSt,id]}ce.classList.remove('active','slide-in');ne.classList.remove('slide-out');if(deeper){ne.classList.add('active','slide-in');setTimeout(()=>{ce.classList.remove('active');ne.classList.remove('slide-in')},260)}else{ne.classList.add('active');ce.classList.add('slide-out');setTimeout(()=>{ce.classList.remove('active','slide-out')},220)}if(id==='photo')upUI();if(id==='colors')renCP();if(id==='draw')initDraw();if(id==='result'){renRes();bldSt()}if(id==='cutout')setTimeout(initCutout,50);if(id==='master')setTimeout(initArtPage,50);if(id==='artResult'){setTimeout(()=>{renArtTabs();renArtCv();bldArtSt()},50)}}
 function cap(s){return s[0].toUpperCase()+s.slice(1)}
 let recentBrands=JSON.parse(localStorage.getItem('recentBrands')||'[]');
 function openSheet(t){if(t==='brand')renBrand();if(t==='size')renSize();document.getElementById('sheet'+cap(t)).classList.add('show')}
@@ -569,7 +606,7 @@ function bCnt(b){if(INTL_BRAND_NAMES.includes(b))return INTL_BRANDS[b].length;if
 function bdn(b){const m={'Artkal_S':'Artkal S','Artkal_C':'Artkal C','Artkal_A':'Artkal A','Artkal_M':'Artkal M','Artkal_R':'Artkal R','Diamond_Dotz':'Diamond Dotz','Perler_Mini':'Perler Mini','Perler_Caps':'Perler Caps','Hama_Mini':'Hama Mini','Hama_Maxi':'Hama Maxi'};return m[b]||b}
 function upUI(){document.getElementById('valBrand').textContent=bdn(cBrand);const s=SD.find(s=>s.w===cSize.w&&s.h===cSize.h);document.getElementById('valSize').textContent=s?s.l:`${cSize.w}x${cSize.h}`;const tot=allC().length,n=selC.size;document.getElementById('valColors').textContent=n===tot?`全部 ${tot} 色`:`已选 ${n}/${tot}`;document.getElementById('colorDots').innerHTML=allC().slice(0,5).map(c=>`<div class="cl-dot" style="background:${c.hex}"></div>`).join('');document.getElementById('btnGen').disabled=!srcImg}
 document.getElementById('fileInput').addEventListener('change',e=>{if(e.target.files[0])ldImg(e.target.files[0])});
-function ldImg(f){const r=new FileReader();r.onload=e=>{const img=new Image();img.onload=()=>{srcImg=img;const z=document.getElementById('uploadZone');z.classList.add('has-img');z.innerHTML=`<img src="${e.target.result}">`;z.onclick=()=>document.getElementById('fileInput').click();upUI();toast('LOADED')};img.src=e.target.result};r.readAsDataURL(f)}
+function ldImg(f){const r=new FileReader();r.onload=e=>{const img=new Image();img.onload=()=>{srcImg=img;const z=document.getElementById('uploadZone');z.classList.add('has-img');z.innerHTML=`<img src="${e.target.result}">`;z.onclick=()=>document.getElementById('fileInput').click();document.getElementById('cutoutBtn').style.display='block';upUI();toast('LOADED')};img.src=e.target.result};r.readAsDataURL(f)}
 function setMode(m,el){exMode=m;el.parentElement.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('on'));el.classList.add('on')}
 function startGen(){if(!srcImg||!selC.size)return;const b=document.getElementById('btnGen');b.disabled=true;b.textContent='LOADING...';setTimeout(()=>{genPat();b.disabled=false;b.textContent='START'},100)}
 function renCP(){const body=document.getElementById('colorBody');let h='';if(isI()){const gs={};for(const c of INTL_BRANDS[cBrand]){const p=c.code.replace(/\d+/g,'');if(!gs[p])gs[p]=[];gs[p].push(c)}for(const[p,g]of Object.entries(gs)){h+=`<div class="c-group">${p} (${g.length})</div><div class="c-grid">`;for(const c of g)h+=ccH(c.hex,c.code);h+='</div>'}}else if(isH()){for(const[g,cs]of Object.entries(HDD_DB)){if(!cs?.length)continue;h+=`<div class="c-group">${GN[g]||g} (${cs.length})</div><div class="c-grid">`;for(const c of cs)h+=ccH(c.hex,c.code);h+='</div>'}}else if(isK()){for(const[g,cs]of Object.entries(KAKA_DB)){if(!cs?.length)continue;h+=`<div class="c-group">卡卡 (${cs.length})</div><div class="c-grid">`;for(const c of cs)h+=ccH(c.hex,c.code,c.type);h+='</div>'}}else{const ord='Z A B C D E F G H M P Q R T Y ZG'.split(' '),gs=Object.keys(COLOR_DB).sort((a,b)=>ord.indexOf(a)-ord.indexOf(b));for(const g of gs){const cs=COLOR_DB[g];if(!cs?.length)continue;h+=`<div class="c-group">${GN[g]||g} (${cs.length})</div><div class="c-grid">`;for(const c of cs){const code=c[cBrand]||c.MARD;if(!code)continue;h+=ccH(c.hex,code,c.type)}h+='</div>'}}body.innerHTML=h;upCC()}
@@ -810,6 +847,139 @@ function expAllLayers(){
     a.download=`layer-${l+1}.png`;a.href=cv.toDataURL('image/png');a.click();
   }
   artCurLayer=oldLayer;renArtCv();toast('ALL SAVED');
+}
+
+/* === 智能抠图 === */
+let cutTool='wand',cutMask=null,cutOrigData=null,cutW=0,cutH=0,cutHistory=[];
+document.getElementById('cutTolerance').oninput=function(){document.getElementById('cutTolVal').textContent=this.value};
+document.getElementById('cutBrushSize').oninput=function(){document.getElementById('cutBrushVal').textContent=this.value};
+
+function setCutTool(t){cutTool=t;document.querySelectorAll('.cut-btn').forEach(b=>b.classList.remove('on'));
+  if(t==='wand')document.getElementById('cutWand').classList.add('on');
+  if(t==='eraser')document.getElementById('cutEraser').classList.add('on');
+  if(t==='restore')document.getElementById('cutRestore').classList.add('on');
+}
+function initCutout(){
+  if(!srcImg)return;
+  const cv=document.getElementById('cutCv'),ctx=cv.getContext('2d');
+  const wr=document.getElementById('cutWrap'),mW=wr.clientWidth-32;
+  const sc=Math.min(mW/srcImg.width,mW/srcImg.height,1);
+  cutW=Math.round(srcImg.width*sc);cutH=Math.round(srcImg.height*sc);
+  cv.width=cutW;cv.height=cutH;
+  ctx.drawImage(srcImg,0,0,cutW,cutH);
+  cutOrigData=ctx.getImageData(0,0,cutW,cutH);
+  cutMask=new Uint8Array(cutW*cutH).fill(255);/* 255=keep, 0=removed */
+  cutHistory=[];
+  renCut();
+  /* 事件绑定 */
+  let drawing=false;
+  cv.onmousedown=cv.ontouchstart=e=>{e.preventDefault();drawing=true;cutAction(e)};
+  cv.onmousemove=cv.ontouchmove=e=>{if(drawing){e.preventDefault();cutAction(e)}};
+  cv.onmouseup=cv.ontouchend=()=>drawing=false;
+}
+function cutAction(e){
+  const cv=document.getElementById('cutCv'),r=cv.getBoundingClientRect();
+  const cx=e.touches?e.touches[0].clientX:e.clientX;
+  const cy=e.touches?e.touches[0].clientY:e.clientY;
+  const x=Math.floor((cx-r.left)*(cv.width/r.width));
+  const y=Math.floor((cy-r.top)*(cv.height/r.height));
+  if(x<0||x>=cutW||y<0||y>=cutH)return;
+  if(cutTool==='wand'){
+    cutHistory.push(new Uint8Array(cutMask));
+    floodRemove(x,y);renCut();
+  }else if(cutTool==='eraser'||cutTool==='restore'){
+    if(!drawing||cutHistory.length===0||cutHistory[cutHistory.length-1]!=='brushing'){
+      cutHistory.push(new Uint8Array(cutMask));cutHistory.push('brushing');
+    }
+    brushCut(x,y,cutTool==='eraser'?0:255);renCut();
+  }
+}
+function floodRemove(sx,sy){
+  const tol=parseInt(document.getElementById('cutTolerance').value);
+  const d=cutOrigData.data;
+  const tr=d[(sy*cutW+sx)*4],tg=d[(sy*cutW+sx)*4+1],tb=d[(sy*cutW+sx)*4+2];
+  const visited=new Uint8Array(cutW*cutH);
+  const stack=[[sx,sy]];
+  while(stack.length){
+    const[x,y]=stack.pop();
+    const i=y*cutW+x;
+    if(x<0||x>=cutW||y<0||y>=cutH||visited[i])continue;
+    visited[i]=1;
+    const pi=i*4;
+    const dr=d[pi]-tr,dg=d[pi+1]-tg,db=d[pi+2]-tb;
+    const dist=Math.sqrt(dr*dr+dg*dg+db*db);
+    if(dist>tol)continue;
+    cutMask[i]=0;
+    stack.push([x+1,y],[x-1,y],[x,y+1],[x,y-1]);
+  }
+}
+function brushCut(cx,cy,val){
+  const bs=parseInt(document.getElementById('cutBrushSize').value);
+  for(let dy=-bs;dy<=bs;dy++)for(let dx=-bs;dx<=bs;dx++){
+    if(dx*dx+dy*dy>bs*bs)continue;
+    const x=cx+dx,y=cy+dy;
+    if(x>=0&&x<cutW&&y>=0&&y<cutH)cutMask[y*cutW+x]=val;
+  }
+}
+function renCut(){
+  const cv=document.getElementById('cutCv'),ctx=cv.getContext('2d');
+  /* 棋盘格背景 */
+  const cs=8;
+  for(let y=0;y<cutH;y+=cs)for(let x=0;x<cutW;x+=cs){
+    ctx.fillStyle=((x/cs+y/cs)%2===0)?'#e0e0e0':'#ffffff';
+    ctx.fillRect(x,y,cs,cs);
+  }
+  /* 叠加原图(只显示mask=255的区域) */
+  const imgD=ctx.createImageData(cutW,cutH);
+  const src=cutOrigData.data;
+  for(let i=0;i<cutW*cutH;i++){
+    const pi=i*4;
+    if(cutMask[i]){imgD.data[pi]=src[pi];imgD.data[pi+1]=src[pi+1];imgD.data[pi+2]=src[pi+2];imgD.data[pi+3]=255}
+    else{imgD.data[pi+3]=0}
+  }
+  ctx.putImageData(imgD,0,0);
+  /* 重绘棋盘格(只在透明区域) */
+  const finalD=ctx.getImageData(0,0,cutW,cutH);
+  for(let i=0;i<cutW*cutH;i++){
+    if(!cutMask[i]){
+      const pi=i*4;
+      const x=i%cutW,y=Math.floor(i/cutW);
+      const c=((Math.floor(x/cs)+Math.floor(y/cs))%2===0)?224:255;
+      finalD.data[pi]=c;finalD.data[pi+1]=c;finalD.data[pi+2]=c;finalD.data[pi+3]=255;
+    }
+  }
+  ctx.putImageData(finalD,0,0);
+}
+function cutUndo(){
+  if(!cutHistory.length)return;
+  /* 移除brushing标记 */
+  while(cutHistory.length&&cutHistory[cutHistory.length-1]==='brushing')cutHistory.pop();
+  if(cutHistory.length){cutMask=cutHistory.pop();renCut()}
+}
+function cutReset(){
+  cutMask=new Uint8Array(cutW*cutH).fill(255);cutHistory=[];renCut();toast('RESET');
+}
+function applyCutout(){
+  if(!cutMask||!cutOrigData)return;
+  /* 创建抠图后的canvas作为新srcImg */
+  const cv=document.createElement('canvas');cv.width=cutW;cv.height=cutH;
+  const ctx=cv.getContext('2d');
+  const imgD=ctx.createImageData(cutW,cutH);
+  const src=cutOrigData.data;
+  for(let i=0;i<cutW*cutH;i++){
+    const pi=i*4;
+    if(cutMask[i]){imgD.data[pi]=src[pi];imgD.data[pi+1]=src[pi+1];imgD.data[pi+2]=src[pi+2];imgD.data[pi+3]=255}
+    else{imgD.data[pi+3]=0}
+  }
+  ctx.putImageData(imgD,0,0);
+  /* 替换srcImg */
+  const newImg=new Image();
+  newImg.onload=()=>{
+    srcImg=newImg;
+    const z=document.getElementById('uploadZone');z.innerHTML=`<img src="${cv.toDataURL()}">`;z.onclick=()=>document.getElementById('fileInput').click();
+    nav('photo');toast('抠图已应用');
+  };
+  newImg.src=cv.toDataURL();
 }
 
 /* 修补openSheet支持artSize */
