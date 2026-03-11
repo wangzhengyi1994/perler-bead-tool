@@ -541,8 +541,8 @@ input[type=file]{display:none}
       <div class="s-row"><span class="s-label">分层数</span><div style="display:flex;align-items:center;gap:8px;flex:1;justify-content:flex-end"><input type="range" id="layerSlider" min="2" max="8" step="1" value="3" oninput="setLayers(+this.value)" style="width:120px;accent-color:var(--green)"><span id="layerVal" style="min-width:36px;text-align:right;font-weight:700">3层</span></div></div>
       <div class="s-row"><span class="s-label">画布尺寸</span><div class="pkr" onclick="openSheet('artSize')"><span id="valArtSize">50x50</span> ▾</div></div>
       <div class="s-row"><span class="s-label">拼豆品牌</span><div class="pkr" onclick="openSheet('brand')"><span id="valArtBrand">MARD</span> ▾</div></div>
-      <div class="s-row"><span class="s-label">最大颜色数</span><div style="display:flex;align-items:center;gap:8px;flex:1;justify-content:flex-end"><input type="range" id="artMaxColSlider" min="0" max="60" step="1" value="0" oninput="artMaxCol=+this.value;document.getElementById('artMaxColVal').textContent=this.value==0?'不限':this.value+'色'" style="width:120px;accent-color:var(--orange)"><span id="artMaxColVal" style="min-width:42px;text-align:right;font-weight:700;font-size:13px">不限</span></div></div>
-      <div class="s-row"><span class="s-label">色彩合并</span><div style="display:flex;align-items:center;gap:8px;flex:1;justify-content:flex-end"><input type="range" id="artMergeSlider" min="0" max="30" step="1" value="0" oninput="artMergeVal=+this.value;document.getElementById('artMergeVal').textContent=this.value==0?'关闭':'ΔE≤'+this.value" style="width:120px;accent-color:var(--orange)"><span id="artMergeVal" style="min-width:50px;text-align:right;font-weight:700;font-size:13px">关闭</span></div></div>
+      <div class="s-row"><span class="s-label">最大颜色数</span><div style="display:flex;align-items:center;gap:8px;flex:1;justify-content:flex-end"><input type="range" id="artMaxColSlider" min="0" max="60" step="1" value="12" oninput="artMaxCol=+this.value;document.getElementById('artMaxColVal').textContent=this.value==0?'不限':this.value+'色'" style="width:120px;accent-color:var(--orange)"><span id="artMaxColVal" style="min-width:42px;text-align:right;font-weight:700;font-size:13px">12色</span></div></div>
+      <div class="s-row"><span class="s-label">色彩合并</span><div style="display:flex;align-items:center;gap:8px;flex:1;justify-content:flex-end"><input type="range" id="artMergeSlider" min="0" max="30" step="1" value="8" oninput="artMergeVal=+this.value;document.getElementById('artMergeVal').textContent=this.value==0?'关闭':'ΔE≤'+this.value" style="width:120px;accent-color:var(--orange)"><span id="artMergeVal" style="min-width:50px;text-align:right;font-weight:700;font-size:13px">ΔE≤8</span></div></div>
     </div></div>
     <div style="padding:16px"><div class="pbtn"><div class="pill-border"></div>
       <button class="pbtn-inner bg-green" id="btnArtGen" disabled onclick="genArt()">生成立体图纸</button></div></div>
@@ -698,18 +698,18 @@ selC=new Set(allC().map(c=>c.hex));upUI();
 
 /* === 立体名画 === */
 const ARTWORKS=[
-  {id:'wave',name:'神奈川冲浪里',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Tsunami_by_hokusai_19th_century.jpg/400px-Tsunami_by_hokusai_19th_century.jpg'},
-  {id:'starry',name:'星月夜',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/400px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg'},
-  {id:'pearl',name:'戴珍珠耳环的少女',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Meisje_met_de_parel.jpg/256px-Meisje_met_de_parel.jpg'},
-  {id:'scream',name:'呐喊',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/The_Scream.jpg/256px-The_Scream.jpg'},
-  {id:'sunflower',name:'向日葵',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Vincent_Willem_van_Gogh_127.jpg/256px-Vincent_Willem_van_Gogh_127.jpg'},
-  {id:'impression',name:'日出印象',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Monet_-_Impression%2C_Sunrise.jpg/320px-Monet_-_Impression%2C_Sunrise.jpg'}
+  {id:'wave',name:'神奈川冲浪里',url:'art/wave.jpg'},
+  {id:'starry',name:'星月夜',url:'art/starry.jpg'},
+  {id:'pearl',name:'戴珍珠耳环的少女',url:'art/pearl.jpg'},
+  {id:'scream',name:'呐喊',url:'art/scream.jpg'},
+  {id:'sunflower',name:'向日葵',url:'art/sunflower.jpg'},
+  {id:'impression',name:'日出印象',url:'art/impression.jpg'}
 ];
-let artImg=null,artLayers=3,artSize={w:50,h:50},artSelId=null,artLayerData=null,artCurLayer=0,artMaxCol=0,artMergeVal=0;
+let artImg=null,artLayers=3,artSize={w:29,h:29},artSelId=null,artLayerData=null,artCurLayer=0,artMaxCol=12,artMergeVal=8;
 
 function initArtPage(){
   const g=document.getElementById('artGrid');
-  g.innerHTML=ARTWORKS.map(a=>`<div class="art-card ${artSelId===a.id?'sel':''}" onclick="pickArt('${a.id}')"><img src="${a.url}" crossorigin="anonymous" loading="lazy"><div class="art-name">${a.name}</div></div>`).join('');
+  g.innerHTML=ARTWORKS.map(a=>`<div class="art-card ${artSelId===a.id?'sel':''}" onclick="pickArt('${a.id}')"><img src="${a.url}" loading="lazy"><div class="art-name">${a.name}</div></div>`).join('');
   document.getElementById('valArtSize').textContent=artSize.w+'x'+artSize.h;
   document.getElementById('valArtBrand').textContent=bdn(cBrand);
   document.getElementById('btnArtGen').disabled=!artImg;
@@ -720,7 +720,7 @@ function pickArt(id){
   const a=ARTWORKS.find(x=>x.id===id);
   document.querySelectorAll('.art-card').forEach(el=>el.classList.remove('sel'));
   event.currentTarget.classList.add('sel');
-  const img=new Image();img.crossOrigin='anonymous';
+  const img=new Image();
   img.onload=()=>{artImg=img;document.getElementById('btnArtGen').disabled=false;toast(a.name)};
   img.onerror=()=>toast('图片加载失败');
   img.src=a.url;
@@ -798,23 +798,26 @@ function genArt(){
     /* 色彩合并+最大颜色数(复用照片转图纸的逻辑) */
     if(artMergeVal>0){const cMap=new Map();for(const row of colorGrid)for(const b of row)if(b){const e=cMap.get(b.hex);if(e)e.count++;else cMap.set(b.hex,{...b,count:1})}const arr=[...cMap.values()].sort((a,b)=>b.count-a.count);for(let i=arr.length-1;i>0;i--){let best=-1,bd=999;for(let j=0;j<i;j++){const d=dE(r2l(hRgb(arr[i].hex)),r2l(hRgb(arr[j].hex)));if(d<bd){bd=d;best=j}}if(bd<=artMergeVal){const from=arr[i].hex,to=arr[best].hex,toObj=arr[best];for(const row of colorGrid)for(let x=0;x<row.length;x++)if(row[x]&&row[x].hex===from)row[x]={...toObj};arr.splice(i,1)}}}
     if(artMaxCol>0){const cMap=new Map();for(const row of colorGrid)for(const b of row)if(b){const e=cMap.get(b.hex);if(e)e.count++;else cMap.set(b.hex,{...b,count:1})}const arr=[...cMap.values()].sort((a,b)=>b.count-a.count);if(arr.length>artMaxCol){const keep=new Set(arr.slice(0,artMaxCol).map(c=>c.hex));const keepPal=arr.slice(0,artMaxCol).map(c=>({...c,lab:r2l(hRgb(c.hex))}));for(const row of colorGrid)for(let x=0;x<row.length;x++)if(row[x]&&!keep.has(row[x].hex)){const rgb=hRgb(row[x].hex),lab=r2l(rgb);let best=keepPal[0],bd=999;for(const k of keepPal){const d=dE(lab,k.lab);if(d<bd){bd=d;best=k}}row[x]={...best}}}}
-    /* 分层: 按深度值分成N层 */
-    /* 计算阈值: 均匀分层 */
+    /* 分层: MARD式三层(底板全填+主体轮廓+前景突出) or 均匀切 */
     const sorted=[...depthMap].sort((a,b)=>a-b);
     const thresholds=[];
-    for(let l=1;l<artLayers;l++){
-      const idx=Math.floor(sorted.length*l/artLayers);
-      thresholds.push(sorted[idx]);
+    if(artLayers===3){
+      /* MARD式: 底板全填, 主体>30%深度, 前景>70%深度 */
+      thresholds.push(sorted[Math.floor(sorted.length*0.3)]);
+      thresholds.push(sorted[Math.floor(sorted.length*0.7)]);
+    }else{
+      for(let l=1;l<artLayers;l++){
+        const idx=Math.floor(sorted.length*l/artLayers);
+        thresholds.push(sorted[idx]);
+      }
     }
     /* 生成每层数据 */
-    /* 保存连续深度图供3D渲染用 */
     artDepthMap=depthMap;artDepthW=w;artDepthH=h;
     artLayerData=[];
     for(let l=0;l<artLayers;l++){
       const layer=[];
       for(let y=0;y<h;y++){const row=[];for(let x=0;x<w;x++){
         const d=depthMap[y*w+x];
-        /* 第l层: 深度值需>=第l个阈值(第0层=底层,全部有) */
         if(l===0){row.push(colorGrid[y][x])}
         else{row.push(d>=thresholds[l-1]?colorGrid[y][x]:null)}
       }layer.push(row)}
