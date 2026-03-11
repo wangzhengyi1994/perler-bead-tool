@@ -541,6 +541,8 @@ input[type=file]{display:none}
       <div class="s-row"><span class="s-label">分层数</span><div style="display:flex;align-items:center;gap:8px;flex:1;justify-content:flex-end"><input type="range" id="layerSlider" min="2" max="8" step="1" value="3" oninput="setLayers(+this.value)" style="width:120px;accent-color:var(--green)"><span id="layerVal" style="min-width:36px;text-align:right;font-weight:700">3层</span></div></div>
       <div class="s-row"><span class="s-label">画布尺寸</span><div class="pkr" onclick="openSheet('artSize')"><span id="valArtSize">50x50</span> ▾</div></div>
       <div class="s-row"><span class="s-label">拼豆品牌</span><div class="pkr" onclick="openSheet('brand')"><span id="valArtBrand">MARD</span> ▾</div></div>
+      <div class="s-row"><span class="s-label">最大颜色数</span><div style="display:flex;align-items:center;gap:8px;flex:1;justify-content:flex-end"><input type="range" id="artMaxColSlider" min="0" max="60" step="1" value="0" oninput="artMaxCol=+this.value;document.getElementById('artMaxColVal').textContent=this.value==0?'不限':this.value+'色'" style="width:120px;accent-color:var(--orange)"><span id="artMaxColVal" style="min-width:42px;text-align:right;font-weight:700;font-size:13px">不限</span></div></div>
+      <div class="s-row"><span class="s-label">色彩合并</span><div style="display:flex;align-items:center;gap:8px;flex:1;justify-content:flex-end"><input type="range" id="artMergeSlider" min="0" max="30" step="1" value="0" oninput="artMergeVal=+this.value;document.getElementById('artMergeVal').textContent=this.value==0?'关闭':'ΔE≤'+this.value" style="width:120px;accent-color:var(--orange)"><span id="artMergeVal" style="min-width:50px;text-align:right;font-weight:700;font-size:13px">关闭</span></div></div>
     </div></div>
     <div style="padding:16px"><div class="pbtn"><div class="pill-border"></div>
       <button class="pbtn-inner bg-green" id="btnArtGen" disabled onclick="genArt()">生成立体图纸</button></div></div>
@@ -703,7 +705,7 @@ const ARTWORKS=[
   {id:'sunflower',name:'向日葵',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Vincent_Willem_van_Gogh_127.jpg/256px-Vincent_Willem_van_Gogh_127.jpg'},
   {id:'impression',name:'日出印象',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Monet_-_Impression%2C_Sunrise.jpg/320px-Monet_-_Impression%2C_Sunrise.jpg'}
 ];
-let artImg=null,artLayers=3,artSize={w:50,h:50},artSelId=null,artLayerData=null,artCurLayer=0;
+let artImg=null,artLayers=3,artSize={w:50,h:50},artSelId=null,artLayerData=null,artCurLayer=0,artMaxCol=0,artMergeVal=0;
 
 function initArtPage(){
   const g=document.getElementById('artGrid');
@@ -793,6 +795,9 @@ function genArt(){
     for(let y=0;y<h;y++){const row=[];for(let x=0;x<w;x++){
       const i=(y*w+x)*4;row.push(closest([imgData[i],imgData[i+1],imgData[i+2]],pal));
     }colorGrid.push(row)}
+    /* 色彩合并+最大颜色数(复用照片转图纸的逻辑) */
+    if(artMergeVal>0){const cMap=new Map();for(const row of colorGrid)for(const b of row)if(b){const e=cMap.get(b.hex);if(e)e.count++;else cMap.set(b.hex,{...b,count:1})}const arr=[...cMap.values()].sort((a,b)=>b.count-a.count);for(let i=arr.length-1;i>0;i--){let best=-1,bd=999;for(let j=0;j<i;j++){const d=dE(r2l(hRgb(arr[i].hex)),r2l(hRgb(arr[j].hex)));if(d<bd){bd=d;best=j}}if(bd<=artMergeVal){const from=arr[i].hex,to=arr[best].hex,toObj=arr[best];for(const row of colorGrid)for(let x=0;x<row.length;x++)if(row[x]&&row[x].hex===from)row[x]={...toObj};arr.splice(i,1)}}}
+    if(artMaxCol>0){const cMap=new Map();for(const row of colorGrid)for(const b of row)if(b){const e=cMap.get(b.hex);if(e)e.count++;else cMap.set(b.hex,{...b,count:1})}const arr=[...cMap.values()].sort((a,b)=>b.count-a.count);if(arr.length>artMaxCol){const keep=new Set(arr.slice(0,artMaxCol).map(c=>c.hex));const keepPal=arr.slice(0,artMaxCol).map(c=>({...c,lab:r2l(hRgb(c.hex))}));for(const row of colorGrid)for(let x=0;x<row.length;x++)if(row[x]&&!keep.has(row[x].hex)){const rgb=hRgb(row[x].hex),lab=r2l(rgb);let best=keepPal[0],bd=999;for(const k of keepPal){const d=dE(lab,k.lab);if(d<bd){bd=d;best=k}}row[x]={...best}}}}
     /* 分层: 按深度值分成N层 */
     /* 计算阈值: 均匀分层 */
     const sorted=[...depthMap].sort((a,b)=>a-b);
