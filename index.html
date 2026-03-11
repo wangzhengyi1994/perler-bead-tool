@@ -52,6 +52,11 @@ body{font-family:var(--body);background:var(--bg);color:var(--text);min-height:1
 .art-tab{font-family:var(--font);font-size:.42rem;padding:6px 14px;border-radius:20px;border:2px solid var(--black);background:var(--white);cursor:pointer;white-space:nowrap}
 .art-tab.on{background:var(--orange);color:var(--white)}
 .art-info{padding:10px 16px;font-family:var(--font);font-size:.38rem;color:var(--text2);text-align:center;flex-shrink:0}
+.art-3d-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;touch-action:none;user-select:none;min-height:300px;position:relative}
+.art-3d-scene{perspective:800px;display:flex;align-items:center;justify-content:center;width:100%;height:100%}
+.art-3d-stack{transform-style:preserve-3d;position:relative;transition:transform .05s ease-out}
+.art-3d-stack canvas{position:absolute;top:50%;left:50%;transform-origin:center center;image-rendering:pixelated;border:1px solid rgba(0,0,0,.15);box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.art-3d-hint{position:absolute;bottom:8px;left:0;right:0;text-align:center;font-family:var(--font);font-size:.34rem;color:var(--text3);pointer-events:none;opacity:.6}
 @media(min-width:520px){.app{max-width:420px;margin-top:20px;margin-bottom:20px;min-height:calc(100dvh - 40px);border-radius:24px;box-shadow:0 8px 40px rgba(0,0,0,.2),0 0 0 3px var(--black);overflow:hidden}}
 @media(min-width:520px){body{background:#3d6b38}}
 
@@ -549,7 +554,13 @@ input[type=file]{display:none}
 <div class="page" id="pageArtResult">
   <div class="hd"><button class="hd-back" onclick="nav('master')">BACK</button><span class="hd-title">立体图纸</span></div>
   <div class="art-layer-tabs" id="artTabs"></div>
-  <div class="cv-wrap" id="artWrap"><canvas id="artCv"></canvas></div>
+  <div class="cv-wrap" id="artWrap" style="display:none"><canvas id="artCv"></canvas></div>
+  <div class="art-3d-wrap" id="art3dWrap">
+    <div class="art-3d-scene" id="art3dScene">
+      <div class="art-3d-stack" id="art3dStack"></div>
+    </div>
+    <div class="art-3d-hint">拖动旋转 · 双指缩放</div>
+  </div>
   <div class="art-info" id="artInfo"></div>
   <div class="st-panel" id="artStPanel" style="display:none"></div>
   <div class="bbar"><div class="btn-row">
@@ -762,6 +773,56 @@ function genArt(){
   },100);
 }
 
+/* === 3D 预览 === */
+let art3dRotX=-25,art3dRotY=15,art3dScale=1,art3dDragging=false,art3dLastX=0,art3dLastY=0,art3dPinchDist=0;
+function init3dPreview(){
+  if(!artLayerData)return;
+  const stack=document.getElementById('art3dStack');
+  stack.innerHTML='';
+  const h=artLayerData[0].length,w=artLayerData[0][0].length;
+  const wrapEl=document.getElementById('art3dWrap');
+  const maxDim=Math.min(wrapEl.clientWidth-40,280);
+  const s=Math.max(2,Math.floor(maxDim/Math.max(w,h)));
+  const layerGap=s*3;
+  for(let l=0;l<artLayers;l++){
+    const cv=document.createElement('canvas');
+    cv.width=w*s;cv.height=h*s;
+    cv.className='art-3d-layer';
+    const ctx=cv.getContext('2d');
+    const layer=artLayerData[l];
+    /* 透明底 */
+    if(l===0){ctx.fillStyle='#eaf5ec';ctx.fillRect(0,0,cv.width,cv.height)}
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+      const b=layer[y][x];
+      if(b){ctx.fillStyle=b.hex;ctx.fillRect(x*s,y*s,s,s)}
+    }
+    /* 网格线 */
+    if(s>=4){ctx.strokeStyle='rgba(0,0,0,.06)';ctx.lineWidth=.5;
+      for(let x=0;x<=w;x++){ctx.beginPath();ctx.moveTo(x*s,0);ctx.lineTo(x*s,cv.height);ctx.stroke()}
+      for(let y=0;y<=h;y++){ctx.beginPath();ctx.moveTo(0,y*s);ctx.lineTo(cv.width,y*s);ctx.stroke()}}
+    const zOff=(l-artLayers/2+0.5)*layerGap;
+    cv.style.transform=`translate(-50%,-50%) translateZ(${zOff}px)`;
+    stack.appendChild(cv);
+  }
+  update3dTransform();
+  /* 拖动事件 */
+  const wrap=document.getElementById('art3dWrap');
+  wrap.onmousedown=e=>{art3dDragging=true;art3dLastX=e.clientX;art3dLastY=e.clientY};
+  wrap.onmousemove=e=>{if(!art3dDragging)return;const dx=e.clientX-art3dLastX,dy=e.clientY-art3dLastY;art3dRotY+=dx*.5;art3dRotX-=dy*.5;art3dRotX=Math.max(-80,Math.min(10,art3dRotX));art3dLastX=e.clientX;art3dLastY=e.clientY;update3dTransform()};
+  wrap.onmouseup=wrap.onmouseleave=()=>art3dDragging=false;
+  wrap.ontouchstart=e=>{
+    if(e.touches.length===2){art3dPinchDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);return}
+    art3dDragging=true;art3dLastX=e.touches[0].clientX;art3dLastY=e.touches[0].clientY};
+  wrap.ontouchmove=e=>{e.preventDefault();
+    if(e.touches.length===2){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);if(art3dPinchDist){art3dScale*=d/art3dPinchDist;art3dScale=Math.max(.5,Math.min(2,art3dScale))}art3dPinchDist=d;update3dTransform();return}
+    if(!art3dDragging)return;const dx=e.touches[0].clientX-art3dLastX,dy=e.touches[0].clientY-art3dLastY;art3dRotY+=dx*.5;art3dRotX-=dy*.5;art3dRotX=Math.max(-80,Math.min(10,art3dRotX));art3dLastX=e.touches[0].clientX;art3dLastY=e.touches[0].clientY;update3dTransform()};
+  wrap.ontouchend=()=>{art3dDragging=false;art3dPinchDist=0};
+}
+function update3dTransform(){
+  const stack=document.getElementById('art3dStack');
+  stack.style.transform=`rotateX(${art3dRotX}deg) rotateY(${art3dRotY}deg) scale(${art3dScale})`;
+}
+
 function renArtTabs(){
   const tabs=document.getElementById('artTabs');
   let h=`<div class="art-tab ${artCurLayer===-1?'on':''}" onclick="setArtLayer(-1)">叠加预览</div>`;
@@ -770,7 +831,16 @@ function renArtTabs(){
   }
   tabs.innerHTML=h;
 }
-function setArtLayer(l){artCurLayer=l;renArtTabs();renArtCv();bldArtSt()}
+function setArtLayer(l){
+  artCurLayer=l;renArtTabs();
+  const wrap2d=document.getElementById('artWrap'),wrap3d=document.getElementById('art3dWrap');
+  const stPanel=document.getElementById('artStPanel');
+  stPanel.style.display='none';
+  if(l===-1){wrap2d.style.display='none';wrap3d.style.display='flex';init3dPreview();
+    document.getElementById('artInfo').textContent='拖动旋转查看立体效果 · '+artLayers+'层叠加';
+  }else{wrap2d.style.display='flex';wrap3d.style.display='none';renArtCv()}
+  bldArtSt();
+}
 function renArtCv(){
   if(!artLayerData)return;
   const cv=document.getElementById('artCv'),ctx=cv.getContext('2d');
@@ -778,33 +848,7 @@ function renArtCv(){
   const wr=document.getElementById('artWrap'),mW=wr.clientWidth-32;
   const s=Math.max(4,Math.floor(Math.min(mW/w,14)));
   cv.width=w*s;cv.height=h*s;
-  if(artCurLayer===-1){
-    /* 叠加预览: 用明暗模拟高度, 越高层越亮 */
-    ctx.fillStyle='#eaf5ec';ctx.fillRect(0,0,cv.width,cv.height);
-    for(let y=0;y<h;y++)for(let x=0;x<w;x++){
-      let topColor=null,topLayer=0;
-      for(let l=artLayers-1;l>=0;l--){
-        if(artLayerData[l][y][x]){topColor=artLayerData[l][y][x];topLayer=l;break}
-      }
-      if(topColor){
-        const px=x*s,py=y*s;
-        ctx.fillStyle=topColor.hex;ctx.fillRect(px+.5,py+.5,s-1,s-1);
-        /* 高层加白色叠加模拟立体感 */
-        if(topLayer>0){
-          ctx.fillStyle=`rgba(255,255,255,${topLayer*0.08})`;
-          ctx.fillRect(px+.5,py+.5,s-1,s-1);
-          /* 底部阴影 */
-          ctx.fillStyle=`rgba(0,0,0,${topLayer*0.04})`;
-          ctx.fillRect(px+.5,py+s-2,s-1,1.5);
-        }
-      }
-    }
-    /* 网格 */
-    ctx.strokeStyle='rgba(60,100,60,.08)';ctx.lineWidth=.5;
-    for(let i=0;i<=w;i++){ctx.beginPath();ctx.moveTo(i*s,0);ctx.lineTo(i*s,cv.height);ctx.stroke()}
-    for(let i=0;i<=h;i++){ctx.beginPath();ctx.moveTo(0,i*s);ctx.lineTo(cv.width,i*s);ctx.stroke()}
-    document.getElementById('artInfo').textContent=`叠加预览 · ${artLayers}层 · 高层=更亮`;
-  }else{
+  if(artCurLayer===-1){return}else{
     const layer=artLayerData[artCurLayer];
     ctx.fillStyle='#eaf5ec';ctx.fillRect(0,0,cv.width,cv.height);
     let cnt=0;
