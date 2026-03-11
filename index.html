@@ -31,6 +31,18 @@
 html{font-size:15px;-webkit-tap-highlight-color:transparent}
 body{font-family:var(--body);background:var(--bg);color:var(--text);min-height:100dvh;-webkit-font-smoothing:antialiased}
 .app{max-width:480px;margin:0 auto;min-height:100dvh;position:relative;overflow:hidden;background:var(--bg)}
+/* Art Gallery */
+.m-section{font-family:var(--font);font-size:.44rem;color:var(--text);padding:10px 16px 6px;letter-spacing:1px}
+.art-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 16px}
+.art-card{position:relative;border-radius:8px;overflow:hidden;border:var(--px) solid var(--black);background:var(--white);cursor:pointer;aspect-ratio:1}
+.art-card img{width:100%;height:100%;object-fit:cover;display:block}
+.art-card .art-name{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);color:#fff;font-family:var(--font);font-size:.34rem;padding:3px 6px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.art-card:hover{transform:scale(1.03);z-index:2}
+.art-card.sel{box-shadow:0 0 0 3px var(--orange)}
+.art-layer-tabs{display:flex;gap:6px;padding:10px 16px;background:var(--white);border-bottom:var(--px) solid var(--black);overflow-x:auto;flex-shrink:0}
+.art-tab{font-family:var(--font);font-size:.42rem;padding:6px 14px;border-radius:20px;border:2px solid var(--black);background:var(--white);cursor:pointer;white-space:nowrap}
+.art-tab.on{background:var(--orange);color:var(--white)}
+.art-info{padding:10px 16px;font-family:var(--font);font-size:.38rem;color:var(--text2);text-align:center;flex-shrink:0}
 @media(min-width:520px){.app{max-width:420px;margin-top:20px;margin-bottom:20px;min-height:calc(100dvh - 40px);border-radius:24px;box-shadow:0 8px 40px rgba(0,0,0,.2),0 0 0 3px var(--black);overflow:hidden}}
 @media(min-width:520px){body{background:#3d6b38}}
 
@@ -385,6 +397,10 @@ input[type=file]{display:none}
         <div class="pill-border"></div>
         <button class="fbtn-inner bg-cyan">识别色号</button>
       </div>
+      <div class="fbtn" onclick="btnClick(this,'master')">
+        <div class="pill-border"></div>
+        <button class="fbtn-inner bg-purple">立体名画</button>
+      </div>
     </div>
 
     <div class="home-ft"><span class="home-ft-text">21 BRANDS · 2400+ COLORS · CIE Lab ΔE</span></div>
@@ -467,6 +483,51 @@ input[type=file]{display:none}
     <div id="idResult"></div></div>
 </div>
 
+<!-- MASTER: 立体名画 -->
+<div class="page" id="pageMaster">
+  <div class="hd"><button class="hd-back" onclick="nav('home')">BACK</button><span class="hd-title">立体名画</span></div>
+  <div class="page-body">
+    <div class="m-section">内置名画</div>
+    <div class="art-grid" id="artGrid"></div>
+    <div class="m-section" style="margin-top:16px">自定义图片</div>
+    <div class="upload-wrap"><div class="rect-border"></div>
+      <div class="upload-zone" id="artUpZ" onclick="document.getElementById('artFI').click()">
+        <div class="upload-px">+</div><div class="upload-label">上传你的图片</div><div class="upload-hint">支持 JPG / PNG</div></div></div>
+    <input type="file" id="artFI" accept="image/*" style="display:none">
+    <div class="s-wrap" style="margin-top:12px"><div class="rect-border"></div><div class="s-card">
+      <div class="s-row"><span class="s-label">分层数</span><div class="seg" id="layerSeg">
+        <button class="seg-btn" onclick="setLayers(2,this)">2层</button>
+        <button class="seg-btn on" onclick="setLayers(3,this)">3层</button>
+        <button class="seg-btn" onclick="setLayers(4,this)">4层</button></div></div>
+      <div class="s-row"><span class="s-label">画布尺寸</span><div class="pkr" onclick="openSheet('artSize')"><span id="valArtSize">50x50</span> ▾</div></div>
+      <div class="s-row"><span class="s-label">拼豆品牌</span><div class="pkr" onclick="openSheet('brand')"><span id="valArtBrand">MARD</span> ▾</div></div>
+    </div></div>
+    <div style="padding:16px"><div class="pbtn"><div class="pill-border"></div>
+      <button class="pbtn-inner bg-green" id="btnArtGen" disabled onclick="genArt()">生成立体图纸</button></div></div>
+  </div>
+</div>
+
+<!-- ART RESULT: 分层结果 -->
+<div class="page" id="pageArtResult">
+  <div class="hd"><button class="hd-back" onclick="nav('master')">BACK</button><span class="hd-title">立体图纸</span></div>
+  <div class="art-layer-tabs" id="artTabs"></div>
+  <div class="cv-wrap" id="artWrap"><canvas id="artCv"></canvas></div>
+  <div class="art-info" id="artInfo"></div>
+  <div class="st-panel" id="artStPanel" style="display:none"></div>
+  <div class="bbar"><div class="btn-row">
+    <div class="pbtn" style="flex:1"><div class="pill-border"></div><button class="pbtn-inner bg-blue" onclick="togArtSt()">STATS</button></div>
+    <div class="pbtn" style="flex:1"><div class="pill-border"></div><button class="pbtn-inner bg-orange" onclick="expAllLayers()">SAVE ALL</button></div>
+    <div class="pbtn" style="flex:1"><div class="pill-border"></div><button class="pbtn-inner bg-green" onclick="expCv('artCv')">SAVE</button></div></div></div>
+</div>
+
+<!-- Art Size Sheet -->
+<div class="sheet" id="sheetArtSize">
+  <div class="sheet-mask" onclick="closeSheet('artSize')"></div>
+  <div class="sheet-body"><div class="sheet-handle"></div>
+    <div class="sh-head"><span>画布尺寸</span><button class="sh-close" onclick="closeSheet('artSize')">×</button></div>
+    <div id="artSizeBody"></div></div>
+</div>
+
 <div class="toast" id="toast"></div>
 </div>
 
@@ -482,7 +543,7 @@ const SD=[{w:16,h:16,l:'16x16',t:'钥匙扣',b:256,tm:'30m'},{w:26,h:26,l:'26x26
 let cBrand='MARD',cSize={w:50,h:50},selC=new Set(),srcImg=null,bRes=null,vMode='grid';
 let dCol=null,dErase=false,dGrid=null,dN=29,fillBg=false,exMode='standard',navSt=['home'];
 
-function nav(id){const cur=navSt[navSt.length-1];if(cur===id)return;const ce=document.getElementById('page'+cap(cur)),ne=document.getElementById('page'+cap(id));if(!ne)return;const d={home:0,photo:1,draw:1,identify:1,colors:2,result:2},deeper=(d[id]||0)>(d[cur]||0);if(deeper)navSt.push(id);else{const i=navSt.indexOf(id);navSt=i>=0?navSt.slice(0,i+1):[...navSt,id]}ce.classList.remove('active','slide-in');ne.classList.remove('slide-out');if(deeper){ne.classList.add('active','slide-in');setTimeout(()=>{ce.classList.remove('active');ne.classList.remove('slide-in')},260)}else{ne.classList.add('active');ce.classList.add('slide-out');setTimeout(()=>{ce.classList.remove('active','slide-out')},220)}if(id==='photo')upUI();if(id==='colors')renCP();if(id==='draw')initDraw();if(id==='result'){renRes();bldSt()}}
+function nav(id){const cur=navSt[navSt.length-1];if(cur===id)return;const ce=document.getElementById('page'+cap(cur)),ne=document.getElementById('page'+cap(id));if(!ne)return;const d={home:0,photo:1,draw:1,identify:1,master:1,colors:2,result:2,artResult:2},deeper=(d[id]||0)>(d[cur]||0);if(deeper)navSt.push(id);else{const i=navSt.indexOf(id);navSt=i>=0?navSt.slice(0,i+1):[...navSt,id]}ce.classList.remove('active','slide-in');ne.classList.remove('slide-out');if(deeper){ne.classList.add('active','slide-in');setTimeout(()=>{ce.classList.remove('active');ne.classList.remove('slide-in')},260)}else{ne.classList.add('active');ce.classList.add('slide-out');setTimeout(()=>{ce.classList.remove('active','slide-out')},220)}if(id==='photo')upUI();if(id==='colors')renCP();if(id==='draw')initDraw();if(id==='result'){renRes();bldSt()}if(id==='master')setTimeout(initArtPage,50);if(id==='artResult'){setTimeout(()=>{renArtTabs();renArtCv();bldArtSt()},50)}}
 function cap(s){return s[0].toUpperCase()+s.slice(1)}
 let recentBrands=JSON.parse(localStorage.getItem('recentBrands')||'[]');
 function openSheet(t){if(t==='brand')renBrand();if(t==='size')renSize();document.getElementById('sheet'+cap(t)).classList.add('show')}
@@ -539,6 +600,223 @@ function ldIdImg(f){const r=new FileReader();r.onload=e=>{const img=new Image();
 document.getElementById('idCanvas').addEventListener('click',e=>{const cv=document.getElementById('idCanvas'),ctx=cv.getContext('2d'),r=cv.getBoundingClientRect();const x=Math.floor((e.clientX-r.left)*(cv.width/r.width)),y=Math.floor((e.clientY-r.top)*(cv.height/r.height));const px=ctx.getImageData(x,y,1,1).data,rgb=[px[0],px[1],px[2]];const hex='#'+rgb.map(v=>v.toString(16).padStart(2,'0')).join(''),lab=r2l(rgb);const ms=[];for(const[g,cs]of Object.entries(COLOR_DB))for(const c of cs){const d=dE(lab,r2l(hRgb(c.hex)));for(const br of CN_BRANDS){if(br==='卡卡')continue;if(c[br])ms.push({hex:c.hex,code:c[br],brand:br,delta:d})}}for(const[g,cs]of Object.entries(KAKA_DB))for(const c of cs)ms.push({hex:c.hex,code:c.code,brand:'卡卡',delta:dE(lab,r2l(hRgb(c.hex)))});
 for(const[g,cs]of Object.entries(HDD_DB))for(const c of cs)ms.push({hex:c.hex,code:c.code,brand:'黄豆豆',delta:dE(lab,r2l(hRgb(c.hex)))});for(const[br,cs]of Object.entries(INTL_BRANDS))for(const c of cs)ms.push({hex:c.hex,code:c.code,brand:bdn(br),delta:dE(lab,r2l(hRgb(c.hex)))});ms.sort((a,b)=>a.delta-b.delta);const seen=new Set(),top=[];for(const m of ms){if(!seen.has(m.brand)){seen.add(m.brand);top.push(m)}if(top.length>=9)break}document.getElementById('idResult').innerHTML=`<div class="id-picked-wrap"><div class="rect-border"></div><div class="id-picked"><div class="id-sw" style="background:${hex}"></div><div><div class="id-hex">${hex.toUpperCase()}</div><div class="id-rgb">RGB(${rgb.join(',')})</div></div></div></div><div class="m-title">MATCH RESULT</div><div class="m-wrap">${top.map(m=>`<div class="m-row"><div class="m-sw" style="background:${m.hex}"></div><div class="m-info"><div class="m-name">${m.code}</div><div class="m-brand">${m.brand}</div></div><div class="m-de">ΔE ${m.delta.toFixed(1)}</div></div>`).join('')}</div>`});
 selC=new Set(allC().map(c=>c.hex));upUI();
+
+/* === 立体名画 === */
+const ARTWORKS=[
+  {id:'wave',name:'神奈川冲浪里',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Tsunami_by_hokusai_19th_century.jpg/400px-Tsunami_by_hokusai_19th_century.jpg'},
+  {id:'starry',name:'星月夜',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/400px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg'},
+  {id:'pearl',name:'戴珍珠耳环的少女',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Meisje_met_de_parel.jpg/300px-Meisje_met_de_parel.jpg'},
+  {id:'scream',name:'呐喊',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Edvard_Munch%2C_1893%2C_The_Scream%2C_oil%2C_tempera_and_pastel_on_cardboard%2C_91_x_73_cm%2C_National_Gallery_of_Norway.jpg/300px-Edvard_Munch%2C_1893%2C_The_Scream%2C_oil%2C_tempera_and_pastel_on_cardboard%2C_91_x_73_cm%2C_National_Gallery_of_Norway.jpg'},
+  {id:'sunflower',name:'向日葵',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Vincent_Willem_van_Gogh_127.jpg/300px-Vincent_Willem_van_Gogh_127.jpg'},
+  {id:'impression',name:'日出印象',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Monet_-_Impression%2C_Sunrise.jpg/400px-Monet_-_Impression%2C_Sunrise.jpg'}
+];
+let artImg=null,artLayers=3,artSize={w:50,h:50},artSelId=null,artLayerData=null,artCurLayer=0;
+
+function initArtPage(){
+  const g=document.getElementById('artGrid');
+  g.innerHTML=ARTWORKS.map(a=>`<div class="art-card ${artSelId===a.id?'sel':''}" onclick="pickArt('${a.id}')"><img src="${a.url}" crossorigin="anonymous" loading="lazy"><div class="art-name">${a.name}</div></div>`).join('');
+  document.getElementById('valArtSize').textContent=artSize.w+'x'+artSize.h;
+  document.getElementById('valArtBrand').textContent=bdn(cBrand);
+  document.getElementById('btnArtGen').disabled=!artImg;
+}
+function pickArt(id){
+  artSelId=id;
+  const a=ARTWORKS.find(x=>x.id===id);
+  document.querySelectorAll('.art-card').forEach(el=>el.classList.remove('sel'));
+  event.currentTarget.classList.add('sel');
+  const img=new Image();img.crossOrigin='anonymous';
+  img.onload=()=>{artImg=img;document.getElementById('btnArtGen').disabled=false;toast(a.name)};
+  img.onerror=()=>toast('图片加载失败');
+  img.src=a.url;
+}
+document.getElementById('artFI').addEventListener('change',e=>{
+  if(!e.target.files[0])return;
+  const r=new FileReader();r.onload=ev=>{
+    const img=new Image();img.onload=()=>{artImg=img;artSelId='custom';
+      const z=document.getElementById('artUpZ');z.classList.add('has-img');z.innerHTML=`<img src="${ev.target.result}">`;z.onclick=()=>document.getElementById('artFI').click();
+      document.getElementById('btnArtGen').disabled=false;toast('LOADED')};
+    img.src=ev.target.result};r.readAsDataURL(e.target.files[0]);
+});
+function setLayers(n,el){artLayers=n;el.parentElement.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('on'));el.classList.add('on')}
+function openArtSizeSheet(){
+  let h='<div class="sh-tags" style="padding:14px 0">';
+  h+=SD.map(s=>{const sl=s.w===artSize.w&&s.h===artSize.h;return`<div class="sh-tag ${sl?'sel':''}" onclick="pickArtSize(${s.w},${s.h})"><span class="sh-tag-name">${s.l}</span><span class="sh-tag-count">${s.b}颗</span></div>`}).join('');
+  h+='</div>';document.getElementById('artSizeBody').innerHTML=h;
+  document.getElementById('sheetArtSize').classList.add('show');
+}
+function pickArtSize(w,h){artSize={w,h};toast(w+'x'+h);closeSheet('artSize')}
+
+/* 深度分层算法 */
+function genDepthMap(imgData,w,h){
+  const depth=new Float32Array(w*h);
+  /* 1. 亮度为基础深度 */
+  for(let i=0;i<w*h;i++){
+    const r=imgData[i*4],g=imgData[i*4+1],b=imgData[i*4+2];
+    const lum=(0.299*r+0.587*g+0.114*b)/255;
+    const sat=1-(Math.min(r,g,b)/Math.max(r,g,b,1));
+    depth[i]=lum*0.6+sat*0.4;
+  }
+  /* 2. 边缘增强: 边缘区域深度提升(前景物体通常有更多边缘) */
+  const edge=new Float32Array(w*h);
+  for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
+    const i=y*w+x;
+    const gx=depth[i+1]-depth[i-1],gy=depth[i+w]-depth[i-w];
+    edge[i]=Math.sqrt(gx*gx+gy*gy);
+  }
+  /* 归一化边缘 */
+  let maxE=0;for(let i=0;i<w*h;i++)if(edge[i]>maxE)maxE=edge[i];
+  if(maxE>0)for(let i=0;i<w*h;i++)edge[i]/=maxE;
+  /* 3. 混合: 亮度+饱和度+边缘 */
+  for(let i=0;i<w*h;i++)depth[i]=depth[i]*0.7+edge[i]*0.3;
+  /* 4. 高斯模糊平滑深度图(避免噪点, 5x5) */
+  const sm=new Float32Array(w*h);
+  const k=[1,4,6,4,1];const ks=256;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+    let s=0,wt=0;
+    for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){
+      const nx=x+dx,ny=y+dy;
+      if(nx>=0&&nx<w&&ny>=0&&ny<h){const kv=k[dy+2]*k[dx+2];s+=depth[ny*w+nx]*kv;wt+=kv}}
+    sm[y*w+x]=s/wt;
+  }
+  return sm;
+}
+
+function genArt(){
+  if(!artImg)return;
+  const btn=document.getElementById('btnArtGen');btn.disabled=true;btn.textContent='LOADING...';
+  setTimeout(()=>{
+    const all=allC(),pal=all.filter(c=>selC.has(c.hex)).map(c=>({...c,code:isI()?c.code:isK()?c.code:isH()?c.code:(c[cBrand]||c.MARD),rgb:hRgb(c.hex),lab:r2l(hRgb(c.hex))}));
+    const{w,h}=artSize;
+    /* 缩放图片到目标尺寸 */
+    const tmp=document.createElement('canvas');tmp.width=w;tmp.height=h;
+    const tc=tmp.getContext('2d');tc.drawImage(artImg,0,0,w,h);
+    const imgData=tc.getImageData(0,0,w,h).data;
+    /* 生成深度图 */
+    const depthMap=genDepthMap(imgData,w,h);
+    /* 匹配颜色 */
+    const colorGrid=[];
+    for(let y=0;y<h;y++){const row=[];for(let x=0;x<w;x++){
+      const i=(y*w+x)*4;row.push(closest([imgData[i],imgData[i+1],imgData[i+2]],pal));
+    }colorGrid.push(row)}
+    /* 分层: 按深度值分成N层 */
+    /* 计算阈值: 均匀分层 */
+    const sorted=[...depthMap].sort((a,b)=>a-b);
+    const thresholds=[];
+    for(let l=1;l<artLayers;l++){
+      const idx=Math.floor(sorted.length*l/artLayers);
+      thresholds.push(sorted[idx]);
+    }
+    /* 生成每层数据 */
+    artLayerData=[];
+    for(let l=0;l<artLayers;l++){
+      const layer=[];
+      for(let y=0;y<h;y++){const row=[];for(let x=0;x<w;x++){
+        const d=depthMap[y*w+x];
+        /* 第l层: 深度值需>=第l个阈值(第0层=底层,全部有) */
+        if(l===0){row.push(colorGrid[y][x])}
+        else{row.push(d>=thresholds[l-1]?colorGrid[y][x]:null)}
+      }layer.push(row)}
+      artLayerData.push(layer);
+    }
+    artCurLayer=0;
+    btn.disabled=false;btn.textContent='生成立体图纸';
+    nav('artResult');
+  },100);
+}
+
+function renArtTabs(){
+  const tabs=document.getElementById('artTabs');
+  let h=`<div class="art-tab ${artCurLayer===-1?'on':''}" onclick="setArtLayer(-1)">叠加预览</div>`;
+  for(let l=0;l<artLayers;l++){
+    h+=`<div class="art-tab ${artCurLayer===l?'on':''}" onclick="setArtLayer(${l})">第${l+1}层${l===0?' (底)':l===artLayers-1?' (顶)':''}</div>`;
+  }
+  tabs.innerHTML=h;
+}
+function setArtLayer(l){artCurLayer=l;renArtTabs();renArtCv();bldArtSt()}
+function renArtCv(){
+  if(!artLayerData)return;
+  const cv=document.getElementById('artCv'),ctx=cv.getContext('2d');
+  const h=artLayerData[0].length,w=artLayerData[0][0].length;
+  const wr=document.getElementById('artWrap'),mW=wr.clientWidth-32;
+  const s=Math.max(4,Math.floor(Math.min(mW/w,14)));
+  cv.width=w*s;cv.height=h*s;
+  if(artCurLayer===-1){
+    /* 叠加预览: 用明暗模拟高度, 越高层越亮 */
+    ctx.fillStyle='#eaf5ec';ctx.fillRect(0,0,cv.width,cv.height);
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+      let topColor=null,topLayer=0;
+      for(let l=artLayers-1;l>=0;l--){
+        if(artLayerData[l][y][x]){topColor=artLayerData[l][y][x];topLayer=l;break}
+      }
+      if(topColor){
+        const px=x*s,py=y*s;
+        ctx.fillStyle=topColor.hex;ctx.fillRect(px+.5,py+.5,s-1,s-1);
+        /* 高层加白色叠加模拟立体感 */
+        if(topLayer>0){
+          ctx.fillStyle=`rgba(255,255,255,${topLayer*0.08})`;
+          ctx.fillRect(px+.5,py+.5,s-1,s-1);
+          /* 底部阴影 */
+          ctx.fillStyle=`rgba(0,0,0,${topLayer*0.04})`;
+          ctx.fillRect(px+.5,py+s-2,s-1,1.5);
+        }
+      }
+    }
+    /* 网格 */
+    ctx.strokeStyle='rgba(60,100,60,.08)';ctx.lineWidth=.5;
+    for(let i=0;i<=w;i++){ctx.beginPath();ctx.moveTo(i*s,0);ctx.lineTo(i*s,cv.height);ctx.stroke()}
+    for(let i=0;i<=h;i++){ctx.beginPath();ctx.moveTo(0,i*s);ctx.lineTo(cv.width,i*s);ctx.stroke()}
+    document.getElementById('artInfo').textContent=`叠加预览 · ${artLayers}层 · 高层=更亮`;
+  }else{
+    const layer=artLayerData[artCurLayer];
+    ctx.fillStyle='#eaf5ec';ctx.fillRect(0,0,cv.width,cv.height);
+    let cnt=0;
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+      const b=layer[y][x],px=x*s,py=y*s;
+      if(b){cnt++;ctx.fillStyle=b.hex;ctx.fillRect(px+.5,py+.5,s-1,s-1)}
+      else{/* 空位打点 */ctx.fillStyle='#b8d8ba';ctx.beginPath();ctx.arc(px+s/2,py+s/2,s*.08,0,Math.PI*2);ctx.fill()}
+    }
+    ctx.strokeStyle='rgba(60,100,60,.12)';ctx.lineWidth=.5;
+    for(let i=0;i<=w;i++){ctx.beginPath();ctx.moveTo(i*s,0);ctx.lineTo(i*s,cv.height);ctx.stroke()}
+    for(let i=0;i<=h;i++){ctx.beginPath();ctx.moveTo(0,i*s);ctx.lineTo(cv.width,i*s);ctx.stroke()}
+    const pct=Math.round(cnt/(w*h)*100);
+    document.getElementById('artInfo').textContent=`第${artCurLayer+1}层 · ${cnt}颗珠子 · 覆盖${pct}%`;
+  }
+}
+function bldArtSt(){
+  if(!artLayerData)return;
+  const layer=artCurLayer===-1?artLayerData[0]:artLayerData[artCurLayer];
+  const cn={};let tot=0;
+  if(artCurLayer===-1){
+    /* 统计所有层 */
+    for(let l=0;l<artLayers;l++)for(const row of artLayerData[l])for(const b of row){
+      if(!b)continue;if(!cn[b.hex])cn[b.hex]={...b,count:0};cn[b.hex].count++;tot++}
+  }else{
+    for(const row of layer)for(const b of row){if(!b)continue;if(!cn[b.hex])cn[b.hex]={...b,count:0};cn[b.hex].count++;tot++}
+  }
+  const st=Object.values(cn).sort((a,b)=>b.count-a.count);
+  let h=`<div class="st-head">${artCurLayer===-1?'全部层':('第'+(artCurLayer+1)+'层')} · ${bdn(cBrand)}</div>`;
+  h+=st.map(c=>`<div class="st-row"><div class="st-sw" style="background:${c.hex}"></div><div class="st-info"><div class="st-name">${c.code}</div><div class="st-code">${c.hex}</div></div><div class="st-n">${c.count}</div></div>`).join('');
+  h+=`<div class="st-total"><span>TOTAL</span><span>${tot}</span></div>`;
+  document.getElementById('artStPanel').innerHTML=h;
+}
+function togArtSt(){const sp=document.getElementById('artStPanel'),cw=document.getElementById('artWrap');if(sp.style.display==='none'){sp.style.display='block';cw.style.display='none'}else{sp.style.display='none';cw.style.display='flex'}}
+function expAllLayers(){
+  if(!artLayerData)return;
+  const oldLayer=artCurLayer;
+  for(let l=0;l<artLayers;l++){
+    artCurLayer=l;renArtCv();
+    const cv=document.getElementById('artCv'),a=document.createElement('a');
+    a.download=`layer-${l+1}.png`;a.href=cv.toDataURL('image/png');a.click();
+  }
+  artCurLayer=oldLayer;renArtCv();toast('ALL SAVED');
+}
+
+/* 修补openSheet支持artSize */
+const origOpenSheet=openSheet;
+openSheet=function(t){
+  if(t==='artSize'){openArtSizeSheet();return}
+  origOpenSheet(t);
+};
 </script>
 </body>
 </html>
