@@ -182,6 +182,7 @@ body{font-family:var(--body);background:var(--bg);color:var(--text);min-height:1
 .bg-yellow{background:linear-gradient(180deg,var(--yellow-l),var(--yellow),var(--yellow-d));color:var(--black)!important;text-shadow:1px 1px 0 rgba(255,255,255,.3)!important}
 .bg-pink{background:linear-gradient(180deg,var(--pink-l),#F2A0B0,var(--pink-d))}
 .bg-blue{background:linear-gradient(180deg,var(--blue-l),var(--blue),var(--blue-d))}
+.bg-purple{background:linear-gradient(180deg,var(--purple-l),var(--purple));color:var(--white);text-shadow:0 2px 0 var(--purple-d)}
 .bg-green{background:linear-gradient(180deg,var(--green-l),var(--green),var(--green-d))}
 .bg-cyan{background:linear-gradient(180deg,var(--cyan-l),var(--cyan),var(--cyan-d))}
 .bg-red{background:linear-gradient(180deg,var(--red-l),var(--red),var(--red-d))}
@@ -605,10 +606,10 @@ selC=new Set(allC().map(c=>c.hex));upUI();
 const ARTWORKS=[
   {id:'wave',name:'神奈川冲浪里',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Tsunami_by_hokusai_19th_century.jpg/400px-Tsunami_by_hokusai_19th_century.jpg'},
   {id:'starry',name:'星月夜',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/400px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg'},
-  {id:'pearl',name:'戴珍珠耳环的少女',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Meisje_met_de_parel.jpg/300px-Meisje_met_de_parel.jpg'},
-  {id:'scream',name:'呐喊',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Edvard_Munch%2C_1893%2C_The_Scream%2C_oil%2C_tempera_and_pastel_on_cardboard%2C_91_x_73_cm%2C_National_Gallery_of_Norway.jpg/300px-Edvard_Munch%2C_1893%2C_The_Scream%2C_oil%2C_tempera_and_pastel_on_cardboard%2C_91_x_73_cm%2C_National_Gallery_of_Norway.jpg'},
-  {id:'sunflower',name:'向日葵',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Vincent_Willem_van_Gogh_127.jpg/300px-Vincent_Willem_van_Gogh_127.jpg'},
-  {id:'impression',name:'日出印象',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Monet_-_Impression%2C_Sunrise.jpg/400px-Monet_-_Impression%2C_Sunrise.jpg'}
+  {id:'pearl',name:'戴珍珠耳环的少女',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Meisje_met_de_parel.jpg/256px-Meisje_met_de_parel.jpg'},
+  {id:'scream',name:'呐喊',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/The_Scream.jpg/256px-The_Scream.jpg'},
+  {id:'sunflower',name:'向日葵',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Vincent_Willem_van_Gogh_127.jpg/256px-Vincent_Willem_van_Gogh_127.jpg'},
+  {id:'impression',name:'日出印象',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Monet_-_Impression%2C_Sunrise.jpg/320px-Monet_-_Impression%2C_Sunrise.jpg'}
 ];
 let artImg=null,artLayers=3,artSize={w:50,h:50},artSelId=null,artLayerData=null,artCurLayer=0;
 
