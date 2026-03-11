@@ -798,18 +798,13 @@ function genArt(){
     /* 色彩合并+最大颜色数(复用照片转图纸的逻辑) */
     if(artMergeVal>0){const cMap=new Map();for(const row of colorGrid)for(const b of row)if(b){const e=cMap.get(b.hex);if(e)e.count++;else cMap.set(b.hex,{...b,count:1})}const arr=[...cMap.values()].sort((a,b)=>b.count-a.count);for(let i=arr.length-1;i>0;i--){let best=-1,bd=999;for(let j=0;j<i;j++){const d=dE(r2l(hRgb(arr[i].hex)),r2l(hRgb(arr[j].hex)));if(d<bd){bd=d;best=j}}if(bd<=artMergeVal){const from=arr[i].hex,to=arr[best].hex,toObj=arr[best];for(const row of colorGrid)for(let x=0;x<row.length;x++)if(row[x]&&row[x].hex===from)row[x]={...toObj};arr.splice(i,1)}}}
     if(artMaxCol>0){const cMap=new Map();for(const row of colorGrid)for(const b of row)if(b){const e=cMap.get(b.hex);if(e)e.count++;else cMap.set(b.hex,{...b,count:1})}const arr=[...cMap.values()].sort((a,b)=>b.count-a.count);if(arr.length>artMaxCol){const keep=new Set(arr.slice(0,artMaxCol).map(c=>c.hex));const keepPal=arr.slice(0,artMaxCol).map(c=>({...c,lab:r2l(hRgb(c.hex))}));for(const row of colorGrid)for(let x=0;x<row.length;x++)if(row[x]&&!keep.has(row[x].hex)){const rgb=hRgb(row[x].hex),lab=r2l(rgb);let best=keepPal[0],bd=999;for(const k of keepPal){const d=dE(lab,k.lab);if(d<bd){bd=d;best=k}}row[x]={...best}}}}
-    /* 分层: MARD式三层(底板全填+主体轮廓+前景突出) or 均匀切 */
+    /* 分层: 金字塔式递减(底层全满, 越往上颗粒越少) */
     const sorted=[...depthMap].sort((a,b)=>a-b);
-    const thresholds=[];
-    if(artLayers===3){
-      /* MARD式: 底板全填, 主体>30%深度, 前景>70%深度 */
-      thresholds.push(sorted[Math.floor(sorted.length*0.3)]);
-      thresholds.push(sorted[Math.floor(sorted.length*0.7)]);
-    }else{
-      for(let l=1;l<artLayers;l++){
-        const idx=Math.floor(sorted.length*l/artLayers);
-        thresholds.push(sorted[idx]);
-      }
+    const N=artLayers,thresholds=[];
+    for(let i=1;i<N;i++){
+      /* percentile = 1 - ((N-i)/N)^2  → 底层宽, 顶层窄 */
+      const pct=1-Math.pow((N-i)/N,2);
+      thresholds.push(sorted[Math.floor(sorted.length*pct)]);
     }
     /* 生成每层数据 */
     artDepthMap=depthMap;artDepthW=w;artDepthH=h;
