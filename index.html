@@ -592,7 +592,7 @@ const SD=[{w:16,h:16,l:'16x16',t:'钥匙扣',b:256,tm:'30m'},{w:26,h:26,l:'26x26
 let cBrand='MARD',cSize={w:50,h:50},selC=new Set(),srcImg=null,bRes=null,vMode='grid';
 let dCol=null,dErase=false,dGrid=null,dN=29,fillBg=false,exMode='standard',navSt=['home'];
 
-function nav(id){const cur=navSt[navSt.length-1];if(cur===id)return;const ce=document.getElementById('page'+cap(cur)),ne=document.getElementById('page'+cap(id));if(!ne)return;const d={home:0,photo:1,draw:1,identify:1,master:1,cutout:2,colors:2,result:2,artResult:2},deeper=(d[id]||0)>(d[cur]||0);if(deeper)navSt.push(id);else{const i=navSt.indexOf(id);navSt=i>=0?navSt.slice(0,i+1):[...navSt,id]}ce.classList.remove('active','slide-in');ne.classList.remove('slide-out');if(deeper){ne.classList.add('active','slide-in');setTimeout(()=>{ce.classList.remove('active');ne.classList.remove('slide-in')},260)}else{ne.classList.add('active');ce.classList.add('slide-out');setTimeout(()=>{ce.classList.remove('active','slide-out')},220)}if(id==='photo')upUI();if(id==='colors')renCP();if(id==='draw')initDraw();if(id==='result'){renRes();bldSt()}if(id==='cutout')setTimeout(initCutout,50);if(id==='master')setTimeout(initArtPage,50);if(id==='artResult'){setTimeout(()=>{renArtTabs();renArtCv();bldArtSt()},50)}}
+function nav(id){const cur=navSt[navSt.length-1];if(cur===id)return;const ce=document.getElementById('page'+cap(cur)),ne=document.getElementById('page'+cap(id));if(!ne)return;const d={home:0,photo:1,draw:1,identify:1,master:1,cutout:2,colors:2,result:2,artResult:2},deeper=(d[id]||0)>(d[cur]||0);if(deeper)navSt.push(id);else{const i=navSt.indexOf(id);navSt=i>=0?navSt.slice(0,i+1):[...navSt,id]}ce.classList.remove('active','slide-in');ne.classList.remove('slide-out');if(deeper){ne.classList.add('active','slide-in');setTimeout(()=>{ce.classList.remove('active');ne.classList.remove('slide-in')},260)}else{ne.classList.add('active');ce.classList.add('slide-out');setTimeout(()=>{ce.classList.remove('active','slide-out')},220)}if(id==='photo')upUI();if(id==='colors')renCP();if(id==='draw')initDraw();if(id==='result'){renRes();bldSt()}if(id==='cutout')setTimeout(initCutout,50);if(id==='master')setTimeout(initArtPage,50);if(id==='artResult'){setTimeout(()=>{setArtLayer(artCurLayer)},50)}}
 function cap(s){return s[0].toUpperCase()+s.slice(1)}
 let recentBrands=JSON.parse(localStorage.getItem('recentBrands')||'[]');
 function openSheet(t){if(t==='brand')renBrand();if(t==='size')renSize();document.getElementById('sheet'+cap(t)).classList.add('show')}
@@ -767,7 +767,7 @@ function genArt(){
       }layer.push(row)}
       artLayerData.push(layer);
     }
-    artCurLayer=0;
+    artCurLayer=-1;
     btn.disabled=false;btn.textContent='生成立体图纸';
     nav('artResult');
   },100);
