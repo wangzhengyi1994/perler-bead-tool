@@ -538,10 +538,7 @@ input[type=file]{display:none}
         <div class="upload-px">+</div><div class="upload-label">上传你的图片</div><div class="upload-hint">支持 JPG / PNG</div></div></div>
     <input type="file" id="artFI" accept="image/*" style="display:none">
     <div class="s-wrap" style="margin-top:12px"><div class="rect-border"></div><div class="s-card">
-      <div class="s-row"><span class="s-label">分层数</span><div class="seg" id="layerSeg">
-        <button class="seg-btn" onclick="setLayers(2,this)">2层</button>
-        <button class="seg-btn on" onclick="setLayers(3,this)">3层</button>
-        <button class="seg-btn" onclick="setLayers(4,this)">4层</button></div></div>
+      <div class="s-row"><span class="s-label">分层数</span><div style="display:flex;align-items:center;gap:8px;flex:1;justify-content:flex-end"><input type="range" id="layerSlider" min="2" max="8" step="1" value="3" oninput="setLayers(+this.value)" style="width:120px;accent-color:var(--green)"><span id="layerVal" style="min-width:36px;text-align:right;font-weight:700">3层</span></div></div>
       <div class="s-row"><span class="s-label">画布尺寸</span><div class="pkr" onclick="openSheet('artSize')"><span id="valArtSize">50x50</span> ▾</div></div>
       <div class="s-row"><span class="s-label">拼豆品牌</span><div class="pkr" onclick="openSheet('brand')"><span id="valArtBrand">MARD</span> ▾</div></div>
     </div></div>
@@ -715,6 +712,7 @@ function initArtPage(){
   document.getElementById('valArtSize').textContent=artSize.w+'x'+artSize.h;
   document.getElementById('valArtBrand').textContent=bdn(cBrand);
   document.getElementById('btnArtGen').disabled=!artImg;
+  setLayers(autoLayers());
 }
 function pickArt(id){
   artSelId=id;
@@ -734,14 +732,15 @@ document.getElementById('artFI').addEventListener('change',e=>{
       document.getElementById('btnArtGen').disabled=false;toast('LOADED')};
     img.src=ev.target.result};r.readAsDataURL(e.target.files[0]);
 });
-function setLayers(n,el){artLayers=n;el.parentElement.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('on'));el.classList.add('on')}
+function setLayers(n){artLayers=n;document.getElementById('layerSlider').value=n;document.getElementById('layerVal').textContent=n+'层'}
+function autoLayers(){const m=Math.max(artSize.w,artSize.h);return Math.max(2,Math.min(8,Math.round(m/15)))}
 function openArtSizeSheet(){
   let h='<div class="sh-tags" style="padding:14px 0">';
   h+=SD.map(s=>{const sl=s.w===artSize.w&&s.h===artSize.h;return`<div class="sh-tag ${sl?'sel':''}" onclick="pickArtSize(${s.w},${s.h})"><span class="sh-tag-name">${s.l}</span><span class="sh-tag-count">${s.b}颗</span></div>`}).join('');
   h+='</div>';document.getElementById('artSizeBody').innerHTML=h;
   document.getElementById('sheetArtSize').classList.add('show');
 }
-function pickArtSize(w,h){artSize={w,h};toast(w+'x'+h);closeSheet('artSize')}
+function pickArtSize(w,h){artSize={w,h};setLayers(autoLayers());toast(w+'x'+h);closeSheet('artSize')}
 
 /* 深度分层算法 */
 function genDepthMap(imgData,w,h){
