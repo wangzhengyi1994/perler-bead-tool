@@ -590,7 +590,7 @@ let dCol=null,dErase=false,dGrid=null,dN=29,fillBg=false,exMode='standard',navSt
 function nav(id){const cur=navSt[navSt.length-1];if(cur===id)return;const ce=document.getElementById('page'+cap(cur)),ne=document.getElementById('page'+cap(id));if(!ne)return;const d={home:0,photo:1,draw:1,identify:1,master:1,cutout:2,colors:2,result:2,artResult:2},deeper=(d[id]||0)>(d[cur]||0);if(deeper)navSt.push(id);else{const i=navSt.indexOf(id);navSt=i>=0?navSt.slice(0,i+1):[...navSt,id]}ce.classList.remove('active','slide-in');ne.classList.remove('slide-out');if(deeper){ne.classList.add('active','slide-in');setTimeout(()=>{ce.classList.remove('active');ne.classList.remove('slide-in')},260)}else{ne.classList.add('active');ce.classList.add('slide-out');setTimeout(()=>{ce.classList.remove('active','slide-out')},220)}if(id==='photo')upUI();if(id==='colors')renCP();if(id==='draw')initDraw();if(id==='result'){renRes();bldSt()}if(id==='cutout')setTimeout(initCutout,50);if(id==='master')setTimeout(initArtPage,50);if(id==='artResult'){setTimeout(()=>{setArtLayer(artCurLayer)},50)}}
 function cap(s){return s[0].toUpperCase()+s.slice(1)}
 let recentBrands=JSON.parse(localStorage.getItem('recentBrands')||'[]');
-function openSheet(t){if(t==='brand')renBrand();if(t==='size')renSize();document.getElementById('sheet'+cap(t)).classList.add('show')}
+function openSheet(t){if(t==='artSize'){openArtSizeSheet();return}if(t==='brand')renBrand();if(t==='size')renSize();document.getElementById('sheet'+cap(t)).classList.add('show')}
 function closeSheet(t){document.getElementById('sheet'+cap(t)).classList.remove('show');upUI()}
 function renBrand(){
   document.getElementById('brandCurrent').textContent='当前选择: '+bdn(cBrand)+' ('+bCnt(cBrand)+'色)';
@@ -610,7 +610,7 @@ function isH(b){return(b||cBrand)==='黄豆豆'}
 function allC(b){b=b||cBrand;if(isI(b))return INTL_BRANDS[b].map(c=>({hex:c.hex,code:c.code,name:c.name,group:c.code.replace(/\d+/,'')}));if(isK(b)){const a=[];for(const[g,cs]of Object.entries(KAKA_DB))cs.forEach(c=>a.push({...c,group:g}));return a}if(isH(b)){const a=[];for(const[g,cs]of Object.entries(HDD_DB))cs.forEach(c=>a.push({...c,group:g}));return a}const a=[];for(const[g,cs]of Object.entries(COLOR_DB))cs.forEach(c=>a.push({...c,group:g}));return a}
 function bCnt(b){if(INTL_BRAND_NAMES.includes(b))return INTL_BRANDS[b].length;if(b==='卡卡')return Object.values(KAKA_DB).reduce((s,a)=>s+a.length,0);if(b==='黄豆豆')return Object.values(HDD_DB).reduce((s,a)=>s+a.length,0);if(['COCO','漫漫','盼盼','咪小窝'].includes(b)){let n=0;for(const cs of Object.values(COLOR_DB))for(const c of cs)if(c[b])n++;return n}return Object.values(COLOR_DB).reduce((s,a)=>s+a.length,0)}
 function bdn(b){const m={'Artkal_S':'Artkal S','Artkal_C':'Artkal C','Artkal_A':'Artkal A','Artkal_M':'Artkal M','Artkal_R':'Artkal R','Diamond_Dotz':'Diamond Dotz','Perler_Mini':'Perler Mini','Perler_Caps':'Perler Caps','Hama_Mini':'Hama Mini','Hama_Maxi':'Hama Maxi'};return m[b]||b}
-function upUI(){document.getElementById('valBrand').textContent=bdn(cBrand);const s=SD.find(s=>s.w===cSize.w&&s.h===cSize.h);document.getElementById('valSize').textContent=s?s.l:`${cSize.w}x${cSize.h}`;const tot=allC().length,n=selC.size;document.getElementById('valColors').textContent=n===tot?`全部 ${tot} 色`:`已选 ${n}/${tot}`;document.getElementById('colorDots').innerHTML=allC().slice(0,5).map(c=>`<div class="cl-dot" style="background:${c.hex}"></div>`).join('');document.getElementById('btnGen').disabled=!srcImg}
+function upUI(){document.getElementById('valBrand').textContent=bdn(cBrand);const s=SD.find(s=>s.w===cSize.w&&s.h===cSize.h);document.getElementById('valSize').textContent=s?s.l:`${cSize.w}x${cSize.h}`;const tot=allC().length,n=selC.size;document.getElementById('valColors').textContent=n===tot?`全部 ${tot} 色`:`已选 ${n}/${tot}`;document.getElementById('colorDots').innerHTML=allC().slice(0,5).map(c=>`<div class="cl-dot" style="background:${c.hex}"></div>`).join('');document.getElementById('btnGen').disabled=!srcImg;const vab=document.getElementById('valArtBrand');if(vab)vab.textContent=bdn(cBrand);const vas=document.getElementById('valArtSize');if(vas)vas.textContent=artSize.w+'x'+artSize.h}
 document.getElementById('fileInput').addEventListener('change',e=>{if(e.target.files[0])ldImg(e.target.files[0])});
 function ldImg(f){const r=new FileReader();r.onload=e=>{const img=new Image();img.onload=()=>{srcImg=img;const z=document.getElementById('uploadZone');z.classList.add('has-img');z.innerHTML=`<img src="${e.target.result}">`;z.onclick=()=>document.getElementById('fileInput').click();document.getElementById('cutoutBtn').style.display='block';upUI();toast('LOADED')};img.src=e.target.result};r.readAsDataURL(f)}
 function setMode(m,el){exMode=m;el.parentElement.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('on'));el.classList.add('on')}
@@ -1083,12 +1083,7 @@ function applyCutout(){
   newImg.src=cv.toDataURL();
 }
 
-/* 修补openSheet支持artSize */
-const origOpenSheet=openSheet;
-openSheet=function(t){
-  if(t==='artSize'){openArtSizeSheet();return}
-  origOpenSheet(t);
-};
+
 </script>
 </body>
 </html>
