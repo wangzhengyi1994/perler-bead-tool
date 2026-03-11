@@ -495,7 +495,7 @@ function renBrand(){
   h+='<div class="sh-section">国际品牌</div><div class="sh-tags">';INTL_BRAND_NAMES.forEach(b=>{h+=bTag(b)});h+='</div>';
   h+='<div class="sh-tips"><div class="sh-tips-title">购买提示</div><div class="sh-tips-text">· 不同品牌的拼豆尺寸可能略有差异<br>· 建议正式制作前购买小包装测试颜色效果<br>· 大型作品建议预算充足的颜色数量<br>· 可以混用不同品牌 但要注意尺寸匹配度</div></div>';
   document.getElementById('brandBody').innerHTML=h}
-function bTag(b){const cnt=bCnt(b),note=b==='黄豆豆'?' (221基础+69特殊)':'';return`<div class="sh-tag ${b===cBrand?'sel':''}" onclick="pickB('${b}')"><span class="sh-tag-name">${bdn(b)}</span><span class="sh-tag-count">${cnt}色${note}</span></div>`}
+function bTag(b){const cnt=bCnt(b),note=b==='黄豆豆'?' (221实色+69珠光/透/夜光等)':'';return`<div class="sh-tag ${b===cBrand?'sel':''}" onclick="pickB('${b}')"><span class="sh-tag-name">${bdn(b)}</span><span class="sh-tag-count">${cnt}色${note}</span></div>`}
 function renSize(){let h='<div class="sh-tags" style="padding:14px 0">';h+=SD.map(s=>{const sl=s.w===cSize.w&&s.h===cSize.h;return`<div class="sh-tag ${sl?'sel':''}" onclick="pickS(${s.w},${s.h})"><span class="sh-tag-name">${s.l} <span style="font-size:.5rem;color:var(--text3)">${s.t}</span></span><span class="sh-tag-count">${s.b}颗</span></div>`}).join('');h+='</div>';document.getElementById('sizeBody').innerHTML=h}
 function pickB(b){cBrand=b;selC=new Set(allC().map(c=>c.hex));recentBrands=recentBrands.filter(x=>x!==b);recentBrands.unshift(b);if(recentBrands.length>3)recentBrands.pop();localStorage.setItem('recentBrands',JSON.stringify(recentBrands));toast(bdn(b));closeSheet('brand')}
 function pickS(w,h){cSize={w,h};toast(w+'x'+h);closeSheet('size')}
