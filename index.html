@@ -744,64 +744,69 @@ function openArtSizeSheet(){
 function pickArtSize(w,h){artSize={w,h};setLayers(autoLayers());toast(w+'x'+h);closeSheet('artSize')}
 
 /* 深度分层算法 */
-function genDepthMap(imgData,w,h){
-  /* 颜色显著性检测: 稀有颜色=前景(高depth), 常见颜色=背景(低depth) */
-  /* 1. 量化颜色到16级(减少计算量), 统计频率 */
-  const qBits=4,qDiv=256>>qBits;
-  const hist=new Map();
-  for(let i=0;i<w*h;i++){
-    const r=imgData[i*4]>>qBits,g=imgData[i*4+1]>>qBits,b=imgData[i*4+2]>>qBits;
-    const key=(r<<(qBits*2))|(g<<qBits)|b;
-    hist.set(key,(hist.get(key)||0)+1);
-  }
-  /* 2. 每个像素的显著性 = 1 - 该颜色的频率(归一化) */
-  const total=w*h;
-  const sal=new Float32Array(w*h);
-  for(let i=0;i<w*h;i++){
-    const r=imgData[i*4]>>qBits,g=imgData[i*4+1]>>qBits,b=imgData[i*4+2]>>qBits;
-    const key=(r<<(qBits*2))|(g<<qBits)|b;
-    sal[i]=1-hist.get(key)/total;
-  }
-  /* 3. 颜色距离加权: 与全图平均色差异越大越显著 */
-  let avgR=0,avgG=0,avgB=0;
-  for(let i=0;i<w*h;i++){avgR+=imgData[i*4];avgG+=imgData[i*4+1];avgB+=imgData[i*4+2]}
-  avgR/=total;avgG/=total;avgB/=total;
-  const cdist=new Float32Array(w*h);
-  let maxCD=0;
-  for(let i=0;i<w*h;i++){
-    const dr=imgData[i*4]-avgR,dg=imgData[i*4+1]-avgG,db=imgData[i*4+2]-avgB;
-    cdist[i]=Math.sqrt(dr*dr+dg*dg+db*db);
-    if(cdist[i]>maxCD)maxCD=cdist[i];
-  }
-  if(maxCD>0)for(let i=0;i<w*h;i++)cdist[i]/=maxCD;
-  /* 4. 混合: 颜色频率显著性60% + 颜色距离40% */
-  const depth=new Float32Array(w*h);
-  for(let i=0;i<w*h;i++)depth[i]=sal[i]*0.6+cdist[i]*0.4;
-  /* 5. 高斯模糊平滑(7x7) */
-  const sm=new Float32Array(w*h);
-  const k=[1,6,15,20,15,6,1];
-  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
-    let s=0,wt=0;
-    for(let dy=-3;dy<=3;dy++)for(let dx=-3;dx<=3;dx++){
-      const nx=x+dx,ny=y+dy;
-      if(nx>=0&&nx<w&&ny>=0&&ny<h){const kv=k[dy+3]*k[dx+3];s+=depth[ny*w+nx]*kv;wt+=kv}}
-    sm[y*w+x]=s/wt;
-  }
-  return sm;
+/* AI深度估计: Depth Anything V2 via Transformers.js (浏览器端推理) */
+let depthPipeline=null,depthLoading=false;
+async function loadDepthModel(){
+  if(depthPipeline)return depthPipeline;
+  if(depthLoading)return null;
+  depthLoading=true;
+  try{
+    const{pipeline}=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1');
+    depthPipeline=await pipeline('depth-estimation','onnx-community/depth-anything-v2-small',{dtype:'q8'});
+    depthLoading=false;
+    return depthPipeline;
+  }catch(e){console.error('Depth model load failed:',e);depthLoading=false;return null}
 }
 
-function genArt(){
+async function aiDepthMap(imgSrc,w,h){
+  const pipe=await loadDepthModel();
+  if(!pipe)return null;
+  /* 用原图调AI, 得到深度图 */
+  const result=await pipe(imgSrc);
+  /* result.depth 是 RawImage, 取灰度值作为深度 */
+  const depthImg=result.depth;
+  /* 缩放到目标尺寸 */
+  const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+  const ctx=cv.getContext('2d');
+  /* RawImage → ImageData → canvas */
+  const srcCv=document.createElement('canvas');
+  srcCv.width=depthImg.width;srcCv.height=depthImg.height;
+  const srcCtx=srcCv.getContext('2d');
+  const id=srcCtx.createImageData(depthImg.width,depthImg.height);
+  for(let i=0;i<depthImg.data.length;i++){
+    id.data[i*4]=depthImg.data[i];id.data[i*4+1]=depthImg.data[i];
+    id.data[i*4+2]=depthImg.data[i];id.data[i*4+3]=255;
+  }
+  srcCtx.putImageData(id,0,0);
+  ctx.drawImage(srcCv,0,0,w,h);
+  const scaled=ctx.getImageData(0,0,w,h).data;
+  const depth=new Float32Array(w*h);
+  for(let i=0;i<w*h;i++)depth[i]=scaled[i*4]/255;
+  return depth;
+}
+
+/* fallback: 简单的颜色显著性(无AI时使用) */
+function fallbackDepthMap(imgData,w,h){
+  const depth=new Float32Array(w*h);
+  const qBits=4,hist=new Map(),total=w*h;
+  for(let i=0;i<total;i++){const k=(imgData[i*4]>>qBits<<8)|(imgData[i*4+1]>>qBits<<4)|(imgData[i*4+2]>>qBits);hist.set(k,(hist.get(k)||0)+1)}
+  for(let i=0;i<total;i++){const k=(imgData[i*4]>>qBits<<8)|(imgData[i*4+1]>>qBits<<4)|(imgData[i*4+2]>>qBits);depth[i]=1-hist.get(k)/total}
+  return depth;
+}
+
+async function genArt(){
   if(!artImg)return;
-  const btn=document.getElementById('btnArtGen');btn.disabled=true;btn.textContent='LOADING...';
-  setTimeout(()=>{
-    const all=allC(),pal=all.filter(c=>selC.has(c.hex)).map(c=>({...c,code:isI()?c.code:isK()?c.code:isH()?c.code:(c[cBrand]||c.MARD),rgb:hRgb(c.hex),lab:r2l(hRgb(c.hex))}));
-    const{w,h}=artSize;
-    /* 缩放图片到目标尺寸 */
-    const tmp=document.createElement('canvas');tmp.width=w;tmp.height=h;
-    const tc=tmp.getContext('2d');tc.drawImage(artImg,0,0,w,h);
-    const imgData=tc.getImageData(0,0,w,h).data;
-    /* 生成深度图 */
-    const depthMap=genDepthMap(imgData,w,h);
+  const btn=document.getElementById('btnArtGen');btn.disabled=true;btn.textContent='AI深度分析中...';
+  const all=allC(),pal=all.filter(c=>selC.has(c.hex)).map(c=>({...c,code:isI()?c.code:isK()?c.code:isH()?c.code:(c[cBrand]||c.MARD),rgb:hRgb(c.hex),lab:r2l(hRgb(c.hex))}));
+  const{w,h}=artSize;
+  /* 缩放图片到目标尺寸 */
+  const tmp=document.createElement('canvas');tmp.width=w;tmp.height=h;
+  const tc=tmp.getContext('2d');tc.drawImage(artImg,0,0,w,h);
+  const imgData=tc.getImageData(0,0,w,h).data;
+  /* AI深度估计(首次加载模型~27MB, 之后有缓存) */
+  let depthMap=await aiDepthMap(artImg.src,w,h);
+  if(!depthMap){btn.textContent='回退算法...';depthMap=fallbackDepthMap(imgData,w,h)}
+  btn.textContent='生成图纸...';
     /* 匹配颜色 */
     const colorGrid=[];
     for(let y=0;y<h;y++){const row=[];for(let x=0;x<w;x++){
@@ -833,7 +838,6 @@ function genArt(){
     artCurLayer=-1;
     btn.disabled=false;btn.textContent='生成立体图纸';
     nav('artResult');
-  },100);
 }
 
 /* === 3D 等距体素预览 === */
