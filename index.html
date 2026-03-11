@@ -434,6 +434,8 @@ input[type=file]{display:none}
       <div class="s-row"><span class="s-label">拼豆品牌</span><div class="pkr" onclick="openSheet('brand')"><span id="valBrand">MARD</span> ▾</div></div>
       <div class="s-row"><span class="s-label">画布尺寸</span><div class="pkr" onclick="openSheet('size')"><span id="valSize">50x50</span> ▾</div></div>
       <div class="s-row"><span class="s-label">填充背景色</span><div class="tgl" id="toggleFillBg" onclick="this.classList.toggle('on');fillBg=this.classList.contains('on')"><div class="tgl-k"></div></div></div>
+      <div class="s-row"><span class="s-label">最大颜色数</span><div style="flex:1;display:flex;align-items:center;gap:8px"><input type="range" id="sliderMaxCol" min="0" max="60" value="0" step="1" style="flex:1;accent-color:var(--accent)" oninput="maxColVal=+this.value;document.getElementById('maxColLabel').textContent=this.value==0?'不限':this.value+'色'"><span id="maxColLabel" style="font-family:var(--font);font-size:.38rem;min-width:2em;color:var(--text2)">不限</span></div></div>
+      <div class="s-row"><span class="s-label">色彩合并</span><div style="flex:1;display:flex;align-items:center;gap:8px"><input type="range" id="sliderMerge" min="0" max="30" value="0" step="1" style="flex:1;accent-color:var(--accent)" oninput="mergeVal=+this.value;document.getElementById('mergeLabel').textContent=this.value==0?'关闭':'ΔE≤'+this.value"><span id="mergeLabel" style="font-family:var(--font);font-size:.38rem;min-width:2em;color:var(--text2)">关闭</span></div></div>
       <div class="s-row"><span class="s-label">提取模式</span><div class="seg"><button class="seg-btn on" onclick="setMode('standard',this)">标准</button><button class="seg-btn" onclick="setMode('block',this)">像素块</button></div></div>
       <div class="cl-row" onclick="nav('colors')"><div class="cl-dots" id="colorDots"></div><span class="cl-text" id="valColors">全部 295 色</span><span class="cl-arrow">></span></div>
     </div></div>
@@ -586,7 +588,7 @@ function btnClick(el,page){el.classList.add('clicked');setTimeout(()=>{el.classL
 const GN={A:'A 暖黄橙',B:'B 绿色系',C:'C 蓝色系',D:'D 紫蓝系',E:'E 粉色系',F:'F 红色系',G:'G 肤棕系',H:'H 黑白灰',M:'M 莫兰迪',P:'P 新色系',Q:'Q 荧光/新',R:'R 新色系II',T:'T 特殊',Y:'Y 夜光',ZG:'ZG 珠光',Z:'Z 光变'};
 const SD=[{w:16,h:16,l:'16x16',t:'钥匙扣',b:256,tm:'30m'},{w:26,h:26,l:'26x26',t:'卡通',b:676,tm:'1h'},{w:32,h:32,l:'32x32',t:'装饰画',b:1024,tm:'2h'},{w:50,h:50,l:'50x50',t:'热门',b:2500,tm:'4h'},{w:52,h:52,l:'52x52',t:'经典板',b:2704,tm:'3h'},{w:64,h:64,l:'64x64',t:'高清',b:4096,tm:'6h'},{w:80,h:80,l:'80x80',t:'精品',b:6400,tm:'10h'},{w:100,h:100,l:'100x100',t:'专业',b:10000,tm:'15h'}];
 let cBrand='MARD',cSize={w:50,h:50},selC=new Set(),srcImg=null,bRes=null,vMode='grid';
-let dCol=null,dErase=false,dGrid=null,dN=29,fillBg=false,exMode='standard',navSt=['home'];
+let dCol=null,dErase=false,dGrid=null,dN=29,fillBg=false,exMode='standard',navSt=['home'],maxColVal=0,mergeVal=0;
 
 function nav(id){const cur=navSt[navSt.length-1];if(cur===id)return;const ce=document.getElementById('page'+cap(cur)),ne=document.getElementById('page'+cap(id));if(!ne)return;const d={home:0,photo:1,draw:1,identify:1,master:1,cutout:2,colors:2,result:2,artResult:2},deeper=(d[id]||0)>(d[cur]||0);if(deeper)navSt.push(id);else{const i=navSt.indexOf(id);navSt=i>=0?navSt.slice(0,i+1):[...navSt,id]}ce.classList.remove('active','slide-in');ne.classList.remove('slide-out');if(deeper){ne.classList.add('active','slide-in');setTimeout(()=>{ce.classList.remove('active');ne.classList.remove('slide-in')},260)}else{ne.classList.add('active');ce.classList.add('slide-out');setTimeout(()=>{ce.classList.remove('active','slide-out')},220)}if(id==='photo')upUI();if(id==='colors')renCP();if(id==='draw')initDraw();if(id==='result'){renRes();bldSt()}if(id==='cutout')setTimeout(initCutout,50);if(id==='master')setTimeout(initArtPage,50);if(id==='artResult'){setTimeout(()=>{setArtLayer(artCurLayer)},50)}}
 function cap(s){return s[0].toUpperCase()+s.slice(1)}
@@ -627,8 +629,58 @@ function upCC(){document.getElementById('cInfo').textContent=`${selC.size}/${all
 function hRgb(h){return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)]}
 function r2l([r,g,b]){let rl=r/255,gl=g/255,bl=b/255;rl=rl>.04045?((rl+.055)/1.055)**2.4:rl/12.92;gl=gl>.04045?((gl+.055)/1.055)**2.4:gl/12.92;bl=bl>.04045?((bl+.055)/1.055)**2.4:bl/12.92;let x=(rl*.4124564+gl*.3575761+bl*.1804375)/.95047,y=rl*.2126729+gl*.7151522+bl*.0721750,z=(rl*.0193339+gl*.1191920+bl*.9503041)/1.08883;const f=v=>v>.008856?Math.cbrt(v):7.787*v+16/116;return[116*f(y)-16,500*(f(x)-f(y)),200*(f(y)-f(z))]}
 function dE(a,b){return Math.sqrt((a[0]-b[0])**2+(a[1]-b[1])**2+(a[2]-b[2])**2)}
+function reduceColors(){
+  if(!bRes||(!mergeVal&&!maxColVal))return;
+  /* 统计用量 */
+  function countColors(){const m=new Map();for(const row of bRes)for(const b of row){if(!b)continue;m.set(b.hex,(m.get(b.hex)||0)+1)}return m}
+  /* 色彩合并: ΔE≤mergeVal的合并成用量多的那个 */
+  if(mergeVal>0){
+    const cm=countColors();const hexes=[...cm.keys()];
+    const labs=new Map();hexes.forEach(h=>labs.set(h,r2l(hRgb(h))));
+    const merged=new Map();/* hex→替换目标hex */
+    for(let i=0;i<hexes.length;i++){
+      if(merged.has(hexes[i]))continue;
+      for(let j=i+1;j<hexes.length;j++){
+        if(merged.has(hexes[j]))continue;
+        const d=dE(labs.get(hexes[i]),labs.get(hexes[j]));
+        if(d<=mergeVal){
+          const ci=cm.get(hexes[i])||0,cj=cm.get(hexes[j])||0;
+          if(ci>=cj){merged.set(hexes[j],hexes[i]);cm.set(hexes[i],ci+cj)}
+          else{merged.set(hexes[i],hexes[j]);cm.set(hexes[j],ci+cj);break}
+        }
+      }
+    }
+    if(merged.size>0){
+      /* 查找根节点 */
+      function root(h){while(merged.has(h))h=merged.get(h);return h}
+      /* 构建颜色对象缓存 */
+      const objCache=new Map();for(const row of bRes)for(const b of row)if(b)objCache.set(b.hex,b);
+      for(const row of bRes)for(let x=0;x<row.length;x++){
+        if(!row[x])continue;const r=root(row[x].hex);
+        if(r!==row[x].hex&&objCache.has(r))row[x]={...objCache.get(r)}
+      }
+    }
+  }
+  /* 最大颜色数限制 */
+  if(maxColVal>0){
+    let cm=countColors();
+    while(cm.size>maxColVal){
+      /* 找用量最少的颜色 */
+      let minH=null,minC=Infinity;
+      for(const[h,c]of cm)if(c<minC){minC=c;minH=h}
+      /* 找与它最接近的颜色(Lab) */
+      const minLab=r2l(hRgb(minH));let bestH=null,bestD=Infinity;
+      for(const[h]of cm){if(h===minH)continue;const d=dE(minLab,r2l(hRgb(h)));if(d<bestD){bestD=d;bestH=h}}
+      if(!bestH)break;
+      /* 替换 */
+      const repObj={hex:bestH};for(const row of bRes)for(const b of row)if(b&&b.hex===bestH){Object.assign(repObj,b);break}
+      for(const row of bRes)for(let x=0;x<row.length;x++){if(row[x]&&row[x].hex===minH)row[x]={...repObj}}
+      cm.set(bestH,(cm.get(bestH)||0)+minC);cm.delete(minH);
+    }
+  }
+}
 function closest(rgb,pal){const lab=r2l(rgb);let best=null,bd=Infinity;for(const c of pal){const d=dE(lab,c.lab);if(d<bd){bd=d;best=c}}return{...best,delta:bd}}
-function genPat(){if(!srcImg||!selC.size)return;const all=allC(),pal=all.filter(c=>selC.has(c.hex)).map(c=>({...c,code:isI()?c.code:isK()?c.code:isH()?c.code:(c[cBrand]||c.MARD),rgb:hRgb(c.hex),lab:r2l(hRgb(c.hex))}));const{w,h}=cSize,tmp=document.createElement('canvas');if(exMode==='block'){const bs=4;tmp.width=w*bs;tmp.height=h*bs;const tc=tmp.getContext('2d');tc.drawImage(srcImg,0,0,tmp.width,tmp.height);const hi=tc.getImageData(0,0,tmp.width,tmp.height).data;bRes=[];for(let y=0;y<h;y++){const row=[];for(let x=0;x<w;x++){let rr=0,gg=0,bb=0,aa=0,cn=0;for(let by=0;by<bs;by++)for(let bx=0;bx<bs;bx++){const px=(y*bs+by)*tmp.width+(x*bs+bx),i=px*4;rr+=hi[i];gg+=hi[i+1];bb+=hi[i+2];aa+=hi[i+3];cn++}if(aa/cn<128&&!fillBg){row.push(null);continue}row.push(closest([Math.round(rr/cn),Math.round(gg/cn),Math.round(bb/cn)],pal))}bRes.push(row)}}else{tmp.width=w;tmp.height=h;const tc=tmp.getContext('2d');tc.drawImage(srcImg,0,0,w,h);const dt=tc.getImageData(0,0,w,h).data;bRes=[];for(let y=0;y<h;y++){const row=[];for(let x=0;x<w;x++){const i=(y*w+x)*4;if(dt[i+3]<128&&!fillBg){row.push(null);continue}row.push(closest([dt[i],dt[i+1],dt[i+2]],pal))}bRes.push(row)}}if(fillBg){const cn={};for(const row of bRes)for(const b of row)if(b)cn[b.hex]=(cn[b.hex]||0)+1;let bh=null,mx=0;for(const[hex,c]of Object.entries(cn))if(c>mx){mx=c;bh=hex}if(bh){const bg=pal.find(c=>c.hex===bh);if(bg)for(let y=0;y<bRes.length;y++)for(let x=0;x<bRes[0].length;x++)if(!bRes[y][x])bRes[y][x]={...bg}}}nav('result')}
+function genPat(){if(!srcImg||!selC.size)return;const all=allC(),pal=all.filter(c=>selC.has(c.hex)).map(c=>({...c,code:isI()?c.code:isK()?c.code:isH()?c.code:(c[cBrand]||c.MARD),rgb:hRgb(c.hex),lab:r2l(hRgb(c.hex))}));const{w,h}=cSize,tmp=document.createElement('canvas');if(exMode==='block'){const bs=4;tmp.width=w*bs;tmp.height=h*bs;const tc=tmp.getContext('2d');tc.drawImage(srcImg,0,0,tmp.width,tmp.height);const hi=tc.getImageData(0,0,tmp.width,tmp.height).data;bRes=[];for(let y=0;y<h;y++){const row=[];for(let x=0;x<w;x++){let rr=0,gg=0,bb=0,aa=0,cn=0;for(let by=0;by<bs;by++)for(let bx=0;bx<bs;bx++){const px=(y*bs+by)*tmp.width+(x*bs+bx),i=px*4;rr+=hi[i];gg+=hi[i+1];bb+=hi[i+2];aa+=hi[i+3];cn++}if(aa/cn<128&&!fillBg){row.push(null);continue}row.push(closest([Math.round(rr/cn),Math.round(gg/cn),Math.round(bb/cn)],pal))}bRes.push(row)}}else{tmp.width=w;tmp.height=h;const tc=tmp.getContext('2d');tc.drawImage(srcImg,0,0,w,h);const dt=tc.getImageData(0,0,w,h).data;bRes=[];for(let y=0;y<h;y++){const row=[];for(let x=0;x<w;x++){const i=(y*w+x)*4;if(dt[i+3]<128&&!fillBg){row.push(null);continue}row.push(closest([dt[i],dt[i+1],dt[i+2]],pal))}bRes.push(row)}}if(fillBg){const cn={};for(const row of bRes)for(const b of row)if(b)cn[b.hex]=(cn[b.hex]||0)+1;let bh=null,mx=0;for(const[hex,c]of Object.entries(cn))if(c>mx){mx=c;bh=hex}if(bh){const bg=pal.find(c=>c.hex===bh);if(bg)for(let y=0;y<bRes.length;y++)for(let x=0;x<bRes[0].length;x++)if(!bRes[y][x])bRes[y][x]={...bg}}}reduceColors();nav('result')}
 function renRes(){if(!bRes)return;const cv=document.getElementById('beadCv'),ctx=cv.getContext('2d');const h=bRes.length,w=bRes[0].length,wr=document.getElementById('rWrap'),mW=wr.clientWidth-32,s=Math.max(4,Math.floor(Math.min(mW/w,14)));cv.width=w*s;cv.height=h*s;ctx.fillStyle='#eaf5ec';ctx.fillRect(0,0,cv.width,cv.height);for(let y=0;y<h;y++)for(let x=0;x<w;x++){const b=bRes[y][x],px=x*s,py=y*s;if(vMode==='round'){ctx.fillStyle='#b8d8ba';ctx.beginPath();ctx.arc(px+s/2,py+s/2,s*.1,0,Math.PI*2);ctx.fill();if(b){ctx.fillStyle=b.hex;ctx.beginPath();ctx.arc(px+s/2,py+s/2,s*.42,0,Math.PI*2);ctx.fill();ctx.fillStyle='rgba(255,255,255,.2)';ctx.beginPath();ctx.arc(px+s/2-s*.1,py+s/2-s*.1,s*.12,0,Math.PI*2);ctx.fill()}}else if(vMode==='pixel'){if(b){ctx.fillStyle=b.hex;ctx.fillRect(px,py,s,s)}}else{if(b){ctx.fillStyle=b.hex;ctx.fillRect(px+.5,py+.5,s-1,s-1)}}}if(vMode==='grid'){ctx.strokeStyle='rgba(60,100,60,.12)';ctx.lineWidth=.5;for(let x=0;x<=w;x++){ctx.beginPath();ctx.moveTo(x*s,0);ctx.lineTo(x*s,cv.height);ctx.stroke()}for(let y=0;y<=h;y++){ctx.beginPath();ctx.moveTo(0,y*s);ctx.lineTo(cv.width,y*s);ctx.stroke()}}}
 function setV(m,el){vMode=m;document.querySelectorAll('.r-btn[data-v]').forEach(b=>b.classList.remove('on'));el.classList.add('on');renRes()}
 function togSt(){const sp=document.getElementById('stPanel'),cw=document.getElementById('rWrap');if(sp.style.display==='none'){sp.style.display='block';cw.style.display='none'}else{sp.style.display='none';cw.style.display='flex'}}
